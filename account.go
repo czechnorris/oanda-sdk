@@ -136,7 +136,7 @@ type Account struct {
 	Trades []TradeSummary `json:"trades"`
 
 	// The details all Account Positions.
-	Positions []Positions `json:"positions"`
+	Positions []Position `json:"positions"`
 
 	// The details of the Orders currently pending in the Account.
 	Orders []Order `json:"orders"`
@@ -227,7 +227,7 @@ type AccountChangesState struct {
 	Trades []CalculatedTradeState `json:"trades"`
 
 	// The price-dependent state for each open Position in the Account.
-	Positions []CaluculatedPositionState `json:"positions"`
+	Positions []CalculatedPositionState `json:"positions"`
 }
 
 // AccountProperties is a struct of properties related to an Account
@@ -246,10 +246,10 @@ type AccountProperties struct {
 // settings related to guaranteed Stop Loss orders
 type GuaranteedStopLossOrderParameters struct {
 	// The current guaranteed Stop Loss Order mutability setting of the Account when market is open.
-	MutabilityMarketOpen GuaranteddStopLossOrderMutability `json:"mutabilityMarketOpen"`
+	MutabilityMarketOpen GuaranteedStopLossOrderMutability `json:"mutabilityMarketOpen"`
 
 	// The current guaranteed Stop Loss Order mutability setting of the Account when market is halted.
-	MutabilityMarketHalted GuaranteddStopLossOrderMutability `json:"mutabilityMarketHalted"`
+	MutabilityMarketHalted GuaranteedStopLossOrderMutability `json:"mutabilityMarketHalted"`
 }
 
 // GuaranteedStopLossOrderMode represents the overall behaviour of the Account regarding guaranteed Stop Loss Orders.
