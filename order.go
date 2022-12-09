@@ -1160,6 +1160,522 @@ func (tslo TrailingStopLossOrder) GetType() OrderType {
 	return tslo.Type
 }
 
+type OrderRequest interface {
+	GetRequestType() OrderType
+}
+
+// MarketOrderRequest specifies the parameters that may be set when creating a MarketOrder
+type MarketOrderRequest struct {
+	// The type of the Order to Create. Must be set to “MARKET” when creating a MarketOrder.
+	// Default: MARKET
+	Type *OrderType `json:"type"`
+
+	// The MarketOrder’s Instrument.
+	Instrument string `json:"instrument"`
+
+	// The quantity requested to be filled by the MarketOrder. A positive number of units results in a long Order, and
+	// a negative number of units results in a short Order.
+	Units decimal.Decimal `json:"units"`
+
+	// The time-in-force requested for the MarketOrder. Restricted to FOK or IOC for a MarketOrder.
+	// Default: FOK
+	TimeInForce *TimeInForce `json:"timeInForce"`
+
+	// The worst price that the client is willing to have the MarketOrder filled at.
+	PriceBound *decimal.Decimal `json:"priceBound"`
+
+	// Specification of how Positions in the Account are modified when the Order is filled.
+	PositionFill *OrderPositionFill `json:"positionFill"`
+
+	// The client extensions to add to the Order. Do not set, modify, or delete clientExtensions if your account is
+	// associated with MT4.
+	ClientExtensions *ClientExtensions `json:"clientExtensions"`
+
+	// TakeProfitDetails specifies the details of a TakeProfitOrder to be created on behalf of a client. This may happen
+	// when an Order is filled that opens a Trade requiring a TakeProfit, or when a Trade’s dependent TakeProfitOrder
+	// is modified directly through the Trade.
+	TakeProfitOnFill *TakeProfitDetails `json:"takeProfitOnFill"`
+
+	// StopLossDetails specifies the details of a StopLossOrder to be created on behalf of a client. This may happen
+	// when an Order is filled that opens a Trade requiring a StopLoss, or when a Trade’s dependent StopLossOrder is
+	// modified directly through the Trade.
+	StopLossOnFill *StopLossDetails `json:"stopLossOnFill"`
+
+	// GuaranteedStopLossDetails specifies the details of a GuaranteedStopLossOrder to be created on behalf of a client.
+	// This may happen when an Order is filled that opens a Trade requiring a GuaranteedStopLoss, or when a Trade’s
+	// dependent GuaranteedStopLossOrder is modified directly through the Trade.
+	GuaranteedStopLossOnFill *GuaranteedStopLossDetails `json:"guaranteedStopLossOnFill"`
+
+	// TrailingStopLossDetails specifies the details of a TrailingStopLossOrder to be created on behalf of a client.
+	// This may happen when an Order is filled that opens a Trade requiring a TrailingStopLoss, or when a Trade’s
+	// dependent TrailingStopLossOrder is modified directly through the Trade.
+	TrailingStopLossOnFill *TrailingStopLossDetails `json:"trailingStopLossOnFill"`
+
+	// Client Extensions to add to the Trade created when the Order is filled (if such a Trade is created). Do not set,
+	// modify, or delete tradeClientExtensions if your account is associated with MT4.
+	TradeClientExtensions *ClientExtensions `json:"tradeClientExtensions"`
+}
+
+func (MarketOrderRequest) GetRequestType() OrderType {
+	return Market
+}
+
+type LimitOrderRequest struct {
+	// The type of the Order to Create. Must be set to “LIMIT” when creating a LimitOrder.
+	// Default: LIMIT
+	Type *OrderType `json:"type"`
+
+	// The LimitOrder’s Instrument.
+	Instrument string `json:"instrument"`
+
+	// The quantity requested to be filled by the LimitOrder. A positive number of units results in a long Order, and
+	// a negative number of units results in a short Order.
+	Units decimal.Decimal `json:"units"`
+
+	// The price threshold specified for the LimitOrder. The LimitOrder will only be filled by a market price that is
+	// equal to or better than this price.
+	Price decimal.Decimal `json:"price"`
+
+	// The time-in-force requested for the LimitOrder.
+	// Default: GTC
+	TimeInForce *TimeInForce `json:"timeInForce"`
+
+	// The date/time when the Limit Order will be cancelled if its timeInForce is GTD.
+	GtdTime *time.Time `json:"gtdTime"`
+
+	// Specification of how Positions in the Account are modified when the Order is filled.
+	PositionFill *OrderPositionFill `json:"positionFill"`
+
+	//  Specification of which price component should be used when determining if
+	//  an Order should be triggered and filled. This allows Orders to be
+	//  triggered based on the bid, ask, mid, default (ask for buy, bid for sell)
+	//  or inverse (ask for sell, bid for buy) price depending on the desired
+	//  behaviour. Orders are always filled using their default price component.
+	//  This feature is only provided through the REST API. Clients who choose to
+	//  specify a non-default trigger condition will not see it reflected in any
+	//  of OANDA’s proprietary or partner trading platforms, their transaction
+	//  history or their account statements. OANDA platforms always assume that
+	//  an Order’s trigger condition is set to the default value when indicating
+	//  the distance from an Order’s trigger price, and will always provide the
+	//  default trigger condition when creating or modifying an Order. A special
+	//  restriction applies when creating a GuaranteedStopLossOrder. In this
+	//  case the TriggerCondition value must either be “DEFAULT”, or the
+	//  “natural” trigger side “DEFAULT” results in. So for a GuaranteedStopLossOrder
+	//  for a long trade valid values are “DEFAULT” and “BID”, and for
+	//  short trades “DEFAULT” and “ASK” are valid.
+	TriggerCondition OrderTriggerCondition `json:"triggerCondition"`
+
+	// The client extensions to add to the Order. Do not set, modify, or delete clientExtensions if your account is
+	// associated with MT4.
+	ClientExtensions *ClientExtensions `json:"clientExtensions"`
+
+	// TakeProfitDetails specifies the details of a TakeProfitOrder to be created on behalf of a client. This may happen
+	// when an Order is filled that opens a Trade requiring a TakeProfit, or when a Trade’s dependent TakeProfitOrder
+	// is modified directly through the Trade.
+	TakeProfitOnFill *TakeProfitDetails `json:"takeProfitOnFill"`
+
+	// StopLossDetails specifies the details of a StopLossOrder to be created on behalf of a client. This may happen
+	// when an Order is filled that opens a Trade requiring a StopLoss, or when a Trade’s dependent StopLossOrder is
+	// modified directly through the Trade.
+	StopLossOnFill *StopLossDetails `json:"stopLossOnFill"`
+
+	// GuaranteedStopLossDetails specifies the details of a GuaranteedStopLossOrder to be created on behalf of a client.
+	// This may happen when an Order is filled that opens a Trade requiring a GuaranteedStopLoss, or when a Trade’s
+	// dependent GuaranteedStopLossOrder is modified directly through the Trade.
+	GuaranteedStopLossOnFill *GuaranteedStopLossDetails `json:"guaranteedStopLossOnFill"`
+
+	// TrailingStopLossDetails specifies the details of a TrailingStopLossOrder to be created on behalf of a client.
+	// This may happen when an Order is filled that opens a Trade requiring a TrailingStopLoss, or when a Trade’s
+	// dependent TrailingStopLossOrder is modified directly through the Trade.
+	TrailingStopLossOnFill *TrailingStopLossDetails `json:"trailingStopLossOnFill"`
+
+	// Client Extensions to add to the Trade created when the Order is filled (if such a Trade is created). Do not set,
+	// modify, or delete tradeClientExtensions if your account is associated with MT4.
+	TradeClientExtensions *ClientExtensions `json:"tradeClientExtensions"`
+}
+
+func (LimitOrderRequest) GetRequestType() OrderType {
+	return Limit
+}
+
+// StopOrderRequest specifies the parameters that may be set when creating a StopOrder
+type StopOrderRequest struct {
+	// The type of the Order to Create. Must be set to “STOP” when creating a StopOrder.
+	// Default: STOP
+	Type *OrderType `json:"type"`
+
+	// The StopOrder’s Instrument.
+	Instrument string `json:"instrument"`
+
+	// The quantity requested to be filled by the StopOrder. A positive number of units results in a long Order, and
+	// a negative number of units results in a short Order.
+	Units decimal.Decimal `json:"units"`
+
+	// The price threshold specified for the StopOrder. The StopOrder will only be filled by a market price that is
+	// equal to or better than this price.
+	Price decimal.Decimal `json:"price"`
+
+	// The worst price that the client is willing to have the StopOrder filled at.
+	PriceBound *decimal.Decimal `json:"priceBound"`
+
+	// The time-in-force requested for the StopOrder.
+	// Default: GTC
+	TimeInForce *TimeInForce `json:"timeInForce"`
+
+	// The date/time when the Stop Order will be cancelled if its timeInForce is GTD.
+	GtdTime *time.Time `json:"gtdTime"`
+
+	// Specification of how Positions in the Account are modified when the Order is filled.
+	PositionFill *OrderPositionFill `json:"positionFill"`
+
+	//  Specification of which price component should be used when determining if
+	//  an Order should be triggered and filled. This allows Orders to be
+	//  triggered based on the bid, ask, mid, default (ask for buy, bid for sell)
+	//  or inverse (ask for sell, bid for buy) price depending on the desired
+	//  behaviour. Orders are always filled using their default price component.
+	//  This feature is only provided through the REST API. Clients who choose to
+	//  specify a non-default trigger condition will not see it reflected in any
+	//  of OANDA’s proprietary or partner trading platforms, their transaction
+	//  history or their account statements. OANDA platforms always assume that
+	//  an Order’s trigger condition is set to the default value when indicating
+	//  the distance from an Order’s trigger price, and will always provide the
+	//  default trigger condition when creating or modifying an Order. A special
+	//  restriction applies when creating a GuaranteedStopLossOrder. In this
+	//  case the TriggerCondition value must either be “DEFAULT”, or the
+	//  “natural” trigger side “DEFAULT” results in. So for a GuaranteedStopLossOrder
+	//  for a long trade valid values are “DEFAULT” and “BID”, and for
+	//  short trades “DEFAULT” and “ASK” are valid.
+	TriggerCondition OrderTriggerCondition `json:"triggerCondition"`
+
+	// The client extensions to add to the Order. Do not set, modify, or delete clientExtensions if your account is
+	// associated with MT4.
+	ClientExtensions *ClientExtensions `json:"clientExtensions"`
+
+	// TakeProfitDetails specifies the details of a TakeProfitOrder to be created on behalf of a client. This may happen
+	// when an Order is filled that opens a Trade requiring a TakeProfit, or when a Trade’s dependent TakeProfitOrder
+	// is modified directly through the Trade.
+	TakeProfitOnFill *TakeProfitDetails `json:"takeProfitOnFill"`
+
+	// StopLossDetails specifies the details of a StopLossOrder to be created on behalf of a client. This may happen
+	// when an Order is filled that opens a Trade requiring a StopLoss, or when a Trade’s dependent StopLossOrder is
+	// modified directly through the Trade.
+	StopLossOnFill *StopLossDetails `json:"stopLossOnFill"`
+
+	// GuaranteedStopLossDetails specifies the details of a GuaranteedStopLossOrder to be created on behalf of a client.
+	// This may happen when an Order is filled that opens a Trade requiring a GuaranteedStopLoss, or when a Trade’s
+	// dependent GuaranteedStopLossOrder is modified directly through the Trade.
+	GuaranteedStopLossOnFill *GuaranteedStopLossDetails `json:"guaranteedStopLossOnFill"`
+
+	// TrailingStopLossDetails specifies the details of a TrailingStopLossOrder to be created on behalf of a client.
+	// This may happen when an Order is filled that opens a Trade requiring a TrailingStopLoss, or when a Trade’s
+	// dependent TrailingStopLossOrder is modified directly through the Trade.
+	TrailingStopLossOnFill *TrailingStopLossDetails `json:"trailingStopLossOnFill"`
+
+	// Client Extensions to add to the Trade created when the Order is filled (if such a Trade is created). Do not set,
+	// modify, or delete tradeClientExtensions if your account is associated with MT4.
+	TradeClientExtensions *ClientExtensions `json:"tradeClientExtensions"`
+}
+
+func (StopOrderRequest) GetRequestType() OrderType {
+	return Stop
+}
+
+// MarketIfTouchedOrderRequest specifies the parameters that may be set when creating a MarketIfTouchedOrder
+type MarketIfTouchedOrderRequest struct {
+	// The type of the Order to Create. Must be set to “MARKET_IF_TOUCHED” when creating a MarketIfTouchedOrder.
+	// Default: MARKET_IF_TOUCHED
+	Type *OrderType `json:"type"`
+
+	// The MarketIfTouchedOrder’s Instrument.
+	Instrument string `json:"instrument"`
+
+	// The quantity requested to be filled by the MarketIfTouchedOrder. A positive number of units results in a long Order, and
+	// a negative number of units results in a short Order.
+	Units decimal.Decimal `json:"units"`
+
+	// The price threshold specified for the MarketIfTouched Order. The MarketIfTouchedOrder will only be filled by a
+	// market price that crosses this price from the direction of the market price at the time when the Order was
+	// created (the initialMarketPrice). Depending on the value of the Order’s price and initialMarketPrice, the
+	// MarketIfTouchedOrder will behave like a LimitOrder or a StopOrder.
+	Price decimal.Decimal `json:"price"`
+
+	// The worst price that the client is willing to have the MarketIfTouchedOrder filled at.
+	PriceBound *decimal.Decimal `json:"priceBound"`
+
+	// The time-in-force requested for the MarketIfTouchedOrder. Restricted to GTC, GFD and GTD for MarketIfTouchedOrders.
+	// Default: GTC
+	TimeInForce *TimeInForce `json:"timeInForce"`
+
+	// The date/time when the MarketIfTouched Order will be cancelled if its timeInForce is GTD.
+	GtdTime *time.Time `json:"gtdTime"`
+
+	// Specification of how Positions in the Account are modified when the Order is filled.
+	PositionFill *OrderPositionFill `json:"positionFill"`
+
+	//  Specification of which price component should be used when determining if
+	//  an Order should be triggered and filled. This allows Orders to be
+	//  triggered based on the bid, ask, mid, default (ask for buy, bid for sell)
+	//  or inverse (ask for sell, bid for buy) price depending on the desired
+	//  behaviour. Orders are always filled using their default price component.
+	//  This feature is only provided through the REST API. Clients who choose to
+	//  specify a non-default trigger condition will not see it reflected in any
+	//  of OANDA’s proprietary or partner trading platforms, their transaction
+	//  history or their account statements. OANDA platforms always assume that
+	//  an Order’s trigger condition is set to the default value when indicating
+	//  the distance from an Order’s trigger price, and will always provide the
+	//  default trigger condition when creating or modifying an Order. A special
+	//  restriction applies when creating a GuaranteedStopLossOrder. In this
+	//  case the TriggerCondition value must either be “DEFAULT”, or the
+	//  “natural” trigger side “DEFAULT” results in. So for a GuaranteedStopLossOrder
+	//  for a long trade valid values are “DEFAULT” and “BID”, and for
+	//  short trades “DEFAULT” and “ASK” are valid.
+	TriggerCondition OrderTriggerCondition `json:"triggerCondition"`
+
+	// The client extensions to add to the Order. Do not set, modify, or delete clientExtensions if your account is
+	// associated with MT4.
+	ClientExtensions *ClientExtensions `json:"clientExtensions"`
+
+	// TakeProfitDetails specifies the details of a TakeProfitOrder to be created on behalf of a client. This may happen
+	// when an Order is filled that opens a Trade requiring a TakeProfit, or when a Trade’s dependent TakeProfitOrder
+	// is modified directly through the Trade.
+	TakeProfitOnFill *TakeProfitDetails `json:"takeProfitOnFill"`
+
+	// StopLossDetails specifies the details of a StopLossOrder to be created on behalf of a client. This may happen
+	// when an Order is filled that opens a Trade requiring a StopLoss, or when a Trade’s dependent StopLossOrder is
+	// modified directly through the Trade.
+	StopLossOnFill *StopLossDetails `json:"stopLossOnFill"`
+
+	// GuaranteedStopLossDetails specifies the details of a GuaranteedStopLossOrder to be created on behalf of a client.
+	// This may happen when an Order is filled that opens a Trade requiring a GuaranteedStopLoss, or when a Trade’s
+	// dependent GuaranteedStopLossOrder is modified directly through the Trade.
+	GuaranteedStopLossOnFill *GuaranteedStopLossDetails `json:"guaranteedStopLossOnFill"`
+
+	// TrailingStopLossDetails specifies the details of a TrailingStopLossOrder to be created on behalf of a client.
+	// This may happen when an Order is filled that opens a Trade requiring a TrailingStopLoss, or when a Trade’s
+	// dependent TrailingStopLossOrder is modified directly through the Trade.
+	TrailingStopLossOnFill *TrailingStopLossDetails `json:"trailingStopLossOnFill"`
+
+	// Client Extensions to add to the Trade created when the Order is filled (if such a Trade is created). Do not set,
+	// modify, or delete tradeClientExtensions if your account is associated with MT4.
+	TradeClientExtensions *ClientExtensions `json:"tradeClientExtensions"`
+}
+
+func (MarketIfTouchedOrderRequest) GetRequestType() OrderType {
+	return MarketIfTouched
+}
+
+// TakeProfitOrderRequest specifies the parameters that may be set when creating a TakeProfitOrder
+type TakeProfitOrderRequest struct {
+	// The type of the Order to Create. Must be set to “TAKE_PROFIT” when creating a TakeProfitOrder.
+	// Default: TAKE_PROFIT
+	Type *OrderType `json:"type"`
+
+	// The ID of the Trade to close when the price threshold is breached.
+	TradeID TradeID `json:"tradeID"`
+
+	// The client ID of the Trade to be closed when the price threshold is breached.
+	ClientTradeID *ClientID `json:"clientTradeID"`
+
+	// The price threshold specified for the TakeProfitOrder. The associated Trade will be closed by a market price that
+	// is equal to or better than this threshold.
+	Price decimal.Decimal `json:"price"`
+
+	// The time-in-force requested for the TakeProfitOrder. Restricted to GTC, GFD and GTD for TakeProfitOrders.
+	// Default: GTC
+	TimeInForce *TimeInForce `json:"timeInForce"`
+
+	// The date/time when the TakeProfit Order will be cancelled if its timeInForce is GTD.
+	GtdTime *time.Time `json:"gtdTime"`
+
+	//  Specification of which price component should be used when determining if
+	//  an Order should be triggered and filled. This allows Orders to be
+	//  triggered based on the bid, ask, mid, default (ask for buy, bid for sell)
+	//  or inverse (ask for sell, bid for buy) price depending on the desired
+	//  behaviour. Orders are always filled using their default price component.
+	//  This feature is only provided through the REST API. Clients who choose to
+	//  specify a non-default trigger condition will not see it reflected in any
+	//  of OANDA’s proprietary or partner trading platforms, their transaction
+	//  history or their account statements. OANDA platforms always assume that
+	//  an Order’s trigger condition is set to the default value when indicating
+	//  the distance from an Order’s trigger price, and will always provide the
+	//  default trigger condition when creating or modifying an Order. A special
+	//  restriction applies when creating a GuaranteedStopLossOrder. In this
+	//  case the TriggerCondition value must either be “DEFAULT”, or the
+	//  “natural” trigger side “DEFAULT” results in. So for a GuaranteedStopLossOrder
+	//  for a long trade valid values are “DEFAULT” and “BID”, and for
+	//  short trades “DEFAULT” and “ASK” are valid.
+	TriggerCondition OrderTriggerCondition `json:"triggerCondition"`
+
+	// The client extensions to add to the Order. Do not set, modify, or delete clientExtensions if your account is
+	// associated with MT4.
+	ClientExtensions *ClientExtensions `json:"clientExtensions"`
+}
+
+func (TakeProfitOrderRequest) GetRequestType() OrderType {
+	return TakeProfit
+}
+
+// StopLossOrderRequest specifies the parameters that may be set when creating a StopLossOrder. Only one of the price
+// and distance fields may be specified.
+type StopLossOrderRequest struct {
+	// The type of the Order to Create. Must be set to “STOP_LOSS” when creating a StopLossOrder.
+	// Default: STOP_LOSS
+	Type *OrderType `json:"type"`
+
+	// The ID of the Trade to close when the price threshold is breached.
+	TradeID TradeID `json:"tradeID"`
+
+	// The client ID of the Trade to be closed when the price threshold is breached.
+	ClientTradeID *ClientID `json:"clientTradeID"`
+
+	// The price threshold specified for the StopLossOrder. The associated Trade will be closed by a market price that
+	// is equal to or better than this threshold.
+	Price *decimal.Decimal `json:"price"`
+
+	// Specifies the distance (in price units) from the Account’s current price to use as the StopLossOrder price. If
+	// the Trade is short the Instrument’s bid price is used, and for long Trades the ask is used.
+	Distance *decimal.Decimal `json:"distance"`
+
+	// The time-in-force requested for the StopLossOrder. Restricted to GTC, GFD and GTD for StopLossOrders.
+	// Default: GTC
+	TimeInForce *TimeInForce `json:"timeInForce"`
+
+	// The date/time when the StopLossOrder will be cancelled if its timeInForce is GTD.
+	GtdTime *time.Time `json:"gtdTime"`
+
+	//  Specification of which price component should be used when determining if
+	//  an Order should be triggered and filled. This allows Orders to be
+	//  triggered based on the bid, ask, mid, default (ask for buy, bid for sell)
+	//  or inverse (ask for sell, bid for buy) price depending on the desired
+	//  behaviour. Orders are always filled using their default price component.
+	//  This feature is only provided through the REST API. Clients who choose to
+	//  specify a non-default trigger condition will not see it reflected in any
+	//  of OANDA’s proprietary or partner trading platforms, their transaction
+	//  history or their account statements. OANDA platforms always assume that
+	//  an Order’s trigger condition is set to the default value when indicating
+	//  the distance from an Order’s trigger price, and will always provide the
+	//  default trigger condition when creating or modifying an Order. A special
+	//  restriction applies when creating a GuaranteedStopLossOrder. In this
+	//  case the TriggerCondition value must either be “DEFAULT”, or the
+	//  “natural” trigger side “DEFAULT” results in. So for a GuaranteedStopLossOrder
+	//  for a long trade valid values are “DEFAULT” and “BID”, and for
+	//  short trades “DEFAULT” and “ASK” are valid.
+	TriggerCondition OrderTriggerCondition `json:"triggerCondition"`
+
+	// The client extensions to add to the Order. Do not set, modify, or delete clientExtensions if your account is
+	// associated with MT4.
+	ClientExtensions *ClientExtensions `json:"clientExtensions"`
+}
+
+func (StopLossOrderRequest) GetRequestType() OrderType {
+	return StopLoss
+}
+
+// GuaranteedStopLossOrderRequest specifies the parameters that may be set when creating a GuaranteedStopLossOrder. Only
+// one of the price and distance fields may be specified
+type GuaranteedStopLossOrderRequest struct {
+	// The type of the Order to Create. Must be set to “GUARANTEED_STOP_LOSS” when creating a GuaranteedStopLossOrder.
+	// Default: GUARANTEED_STOP_LOSS
+	Type *OrderType `json:"type"`
+
+	// The ID of the Trade to close when the price threshold is breached.
+	TradeID TradeID `json:"tradeID"`
+
+	// The client ID of the Trade to be closed when the price threshold is breached.
+	ClientTradeID *ClientID `json:"clientTradeID"`
+
+	// The price threshold specified for the GuaranteedStopLossOrder. The associated Trade will be closed at this price.
+	Price *decimal.Decimal `json:"price"`
+
+	// Specifies the distance (in price units) from the Account’s current price to use as the GuaranteedStopLossOrder price. If
+	// the Trade is short the Instrument’s bid price is used, and for long Trades the ask is used.
+	Distance *decimal.Decimal `json:"distance"`
+
+	// The time-in-force requested for the GuaranteedStopLossOrder. Restricted to GTC, GFD and GTD for GuaranteedStopLossOrders.
+	// Default: GTC
+	TimeInForce *TimeInForce `json:"timeInForce"`
+
+	// The date/time when the GuaranteedStopLossOrder will be cancelled if its timeInForce is GTD.
+	GtdTime *time.Time `json:"gtdTime"`
+
+	//  Specification of which price component should be used when determining if
+	//  an Order should be triggered and filled. This allows Orders to be
+	//  triggered based on the bid, ask, mid, default (ask for buy, bid for sell)
+	//  or inverse (ask for sell, bid for buy) price depending on the desired
+	//  behaviour. Orders are always filled using their default price component.
+	//  This feature is only provided through the REST API. Clients who choose to
+	//  specify a non-default trigger condition will not see it reflected in any
+	//  of OANDA’s proprietary or partner trading platforms, their transaction
+	//  history or their account statements. OANDA platforms always assume that
+	//  an Order’s trigger condition is set to the default value when indicating
+	//  the distance from an Order’s trigger price, and will always provide the
+	//  default trigger condition when creating or modifying an Order. A special
+	//  restriction applies when creating a GuaranteedStopLossOrder. In this
+	//  case the TriggerCondition value must either be “DEFAULT”, or the
+	//  “natural” trigger side “DEFAULT” results in. So for a GuaranteedStopLossOrder
+	//  for a long trade valid values are “DEFAULT” and “BID”, and for
+	//  short trades “DEFAULT” and “ASK” are valid.
+	TriggerCondition OrderTriggerCondition `json:"triggerCondition"`
+
+	// The client extensions to add to the Order. Do not set, modify, or delete clientExtensions if your account is
+	// associated with MT4.
+	ClientExtensions *ClientExtensions `json:"clientExtensions"`
+}
+
+func (GuaranteedStopLossOrderRequest) GetRequestType() OrderType {
+	return GuaranteedStopLoss
+}
+
+// TrailingStopLossOrderRequest specifies the parameters that may be set when creating a TrailingStopLossOrder
+type TrailingStopLossOrderRequest struct {
+	// The type of the Order to Create. Must be set to “TRAILING_STOP_LOSS” when creating a TrailingStopLossOrder.
+	// Default: TRAILING_STOP_LOSS
+	Type *OrderType `json:"type"`
+
+	// The ID of the Trade to close when the price threshold is breached.
+	TradeID TradeID `json:"tradeID"`
+
+	// The client ID of the Trade to be closed when the price threshold is breached.
+	ClientTradeID *ClientID `json:"clientTradeID"`
+
+	// The price distance (in price units) specified for the TrailingStopLossOrder
+	Distance decimal.Decimal `json:"distance"`
+
+	// The time-in-force requested for the TrailingStopLossOrder. Restricted to GTC, GFD and GTD for TrailingStopLossOrders.
+	// Default: GTC
+	TimeInForce *TimeInForce `json:"timeInForce"`
+
+	// The date/time when the TrailingStopLossOrder will be cancelled if its timeInForce is GTD.
+	GtdTime *time.Time `json:"gtdTime"`
+
+	//  Specification of which price component should be used when determining if
+	//  an Order should be triggered and filled. This allows Orders to be
+	//  triggered based on the bid, ask, mid, default (ask for buy, bid for sell)
+	//  or inverse (ask for sell, bid for buy) price depending on the desired
+	//  behaviour. Orders are always filled using their default price component.
+	//  This feature is only provided through the REST API. Clients who choose to
+	//  specify a non-default trigger condition will not see it reflected in any
+	//  of OANDA’s proprietary or partner trading platforms, their transaction
+	//  history or their account statements. OANDA platforms always assume that
+	//  an Order’s trigger condition is set to the default value when indicating
+	//  the distance from an Order’s trigger price, and will always provide the
+	//  default trigger condition when creating or modifying an Order. A special
+	//  restriction applies when creating a GuaranteedStopLossOrder. In this
+	//  case the TriggerCondition value must either be “DEFAULT”, or the
+	//  “natural” trigger side “DEFAULT” results in. So for a GuaranteedStopLossOrder
+	//  for a long trade valid values are “DEFAULT” and “BID”, and for
+	//  short trades “DEFAULT” and “ASK” are valid.
+	TriggerCondition OrderTriggerCondition `json:"triggerCondition"`
+
+	// The client extensions to add to the Order. Do not set, modify, or delete clientExtensions if your account is
+	// associated with MT4.
+	ClientExtensions *ClientExtensions `json:"clientExtensions"`
+}
+
+func (TrailingStopLossOrderRequest) GetRequestType() OrderType {
+	return TrailingStopLoss
+}
+
 // OrderID is a string representation of the OANDA-assigned OrderID. OANDA-assigned OrderIDs are positive integers, and
 // are derived from the TransactionID of the Transaction that created the Order.
 type OrderID string

@@ -258,3 +258,214 @@ func (c *Client) GetInstrumentPositionBook(instrument string, time *string) (*Ge
 	}
 	return &instrumentPositionBookResponse, nil
 }
+
+// CreateOrder creates an Order for an Account
+func (c *Client) CreateOrder(accountID string, orderRequest OrderRequest) (*CreateOrderResponse, error) {
+	var buf bytes.Buffer
+	err := json.NewEncoder(&buf).Encode(orderRequest)
+	if err != nil {
+		return nil, err
+	}
+	req, err := http.NewRequest(http.MethodPost, fmt.Sprintf("%s/v3/accounts/%s/orders", c.baseUrl, accountID), &buf)
+	if err != nil {
+		return nil, err
+	}
+	c.setHeaders(req)
+	resp, err := c.conn.Do(req)
+	if err != nil {
+		return nil, err
+	}
+	switch resp.StatusCode {
+	case http.StatusCreated:
+		var createdOrderResponse CreateOrderResponse
+		err = json.NewDecoder(resp.Body).Decode(&createdOrderResponse)
+		if err != nil {
+			return nil, err
+		}
+		return &createdOrderResponse, nil
+	case http.StatusBadRequest, http.StatusNotFound:
+		var errorResponse CreateOrderErrorResponse
+		err = json.NewDecoder(resp.Body).Decode(&errorResponse)
+		if err != nil {
+			return nil, err
+		}
+		return nil, errorResponse
+	}
+	return nil, fmt.Errorf("received an HTTP %d response", resp.StatusCode)
+}
+
+// GetAccountOrders gets a list of Orders for an Account
+func (c *Client) GetAccountOrders(accountID string, request GetAccountOrdersRequest) (*GetAccountOrdersResponse, error) {
+	urlQuery, err := query.Values(request)
+	if err != nil {
+		return nil, err
+	}
+	req, err := http.NewRequest(http.MethodGet, fmt.Sprintf("%s/v3/accounts/%s/orders?%s", c.baseUrl, accountID, urlQuery.Encode()), nil)
+	if err != nil {
+		return nil, err
+	}
+	c.setHeaders(req)
+	resp, err := c.conn.Do(req)
+	if err != nil {
+		return nil, err
+	}
+	if resp.StatusCode != http.StatusOK {
+		return nil, fmt.Errorf("received an HTTP %d response", resp.StatusCode)
+	}
+	var accountOrdersResponse GetAccountOrdersResponse
+	err = json.NewDecoder(resp.Body).Decode(&accountOrdersResponse)
+	if err != nil {
+		return nil, err
+	}
+	return &accountOrdersResponse, err
+}
+
+// GetAccountPendingOrders lists all pending Orders in an Account
+func (c *Client) GetAccountPendingOrders(accountID string) (*GetAccountOrdersResponse, error) {
+	req, err := http.NewRequest(http.MethodGet, fmt.Sprintf("%s/accounts/%s/pendingOrders", c.baseUrl, accountID), nil)
+	if err != nil {
+		return nil, err
+	}
+	c.setHeaders(req)
+	resp, err := c.conn.Do(req)
+	if err != nil {
+		return nil, err
+	}
+	if resp.StatusCode != http.StatusOK {
+		return nil, fmt.Errorf("received an HTTP %d response", resp.StatusCode)
+	}
+	var accountOrdersResponse GetAccountOrdersResponse
+	err = json.NewDecoder(resp.Body).Decode(&accountOrdersResponse)
+	if err != nil {
+		return nil, err
+	}
+	return &accountOrdersResponse, nil
+}
+
+// GetAccountOrder gets details for a single Order in an Account
+func (c *Client) GetAccountOrder(accountID string, orderSpecifier OrderSpecifier) (*GetAccountOrderResponse, error) {
+	req, err := http.NewRequest(http.MethodGet, fmt.Sprintf("%s/accounts/%s/orders/%s", c.baseUrl, accountID, orderSpecifier), nil)
+	if err != nil {
+		return nil, err
+	}
+	c.setHeaders(req)
+	resp, err := c.conn.Do(req)
+	if err != nil {
+		return nil, err
+	}
+	if resp.StatusCode != http.StatusOK {
+		return nil, fmt.Errorf("received an HTTP %d response", resp.StatusCode)
+	}
+	var accountOrderResponse GetAccountOrderResponse
+	err = json.NewDecoder(resp.Body).Decode(&accountOrderResponse)
+	if err != nil {
+		return nil, err
+	}
+	return &accountOrderResponse, nil
+}
+
+// ReplaceAccountOrder replaces an Order in an Account by simultaneously cancelling it and creating a replacement Order
+func (c *Client) ReplaceAccountOrder(accountID string, orderSpecifier OrderSpecifier, orderRequest OrderRequest) (*ReplaceAccountOrderResponse, error) {
+	var buf bytes.Buffer
+	err := json.NewEncoder(&buf).Encode(orderRequest)
+	if err != nil {
+		return nil, err
+	}
+	req, err := http.NewRequest(http.MethodPut, fmt.Sprintf("%s/v3/accounts/%s/orders/%s", c.baseUrl, accountID, orderSpecifier), &buf)
+	if err != nil {
+		return nil, err
+	}
+	c.setHeaders(req)
+	resp, err := c.conn.Do(req)
+	if err != nil {
+		return nil, err
+	}
+	switch resp.StatusCode {
+	case http.StatusCreated:
+		var replaceAccountOrderResponse ReplaceAccountOrderResponse
+		err = json.NewDecoder(resp.Body).Decode(&replaceAccountOrderResponse)
+		if err != nil {
+			return nil, err
+		}
+		return &replaceAccountOrderResponse, nil
+	case http.StatusBadRequest:
+		var errorResponse CreateOrderErrorResponse
+		err = json.NewDecoder(resp.Body).Decode(&errorResponse)
+		if err != nil {
+			return nil, err
+		}
+		return nil, errorResponse
+	case http.StatusNotFound:
+		var errorResponse ReplaceAccountOrderErrorResponse
+		err = json.NewDecoder(resp.Body).Decode(&errorResponse)
+		if err != nil {
+			return nil, err
+		}
+		return nil, errorResponse
+	}
+	return nil, fmt.Errorf("received an HTTP %d response", resp.StatusCode)
+}
+
+// CancelAccountOrder cancels a pending Order in an Account
+func (c *Client) CancelAccountOrder(accountID string, orderSpecifier OrderSpecifier) (*CancelAccountOrderResponse, error) {
+	req, err := http.NewRequest(http.MethodPut, fmt.Sprintf("%s/v3/accounts/%s/orders/%s/cancel", c.baseUrl, accountID, orderSpecifier), nil)
+	if err != nil {
+		return nil, err
+	}
+	c.setHeaders(req)
+	resp, err := c.conn.Do(req)
+	if err != nil {
+		return nil, err
+	}
+	switch resp.StatusCode {
+	case http.StatusOK:
+		var cancelAccountOrderResponse CancelAccountOrderResponse
+		err = json.NewDecoder(resp.Body).Decode(&cancelAccountOrderResponse)
+		if err != nil {
+			return nil, err
+		}
+		return &cancelAccountOrderResponse, nil
+	case http.StatusNotFound:
+		var errorResponse ReplaceAccountOrderErrorResponse
+		err = json.NewDecoder(resp.Body).Decode(&errorResponse)
+		if err != nil {
+			return nil, err
+		}
+		return nil, errorResponse
+	}
+	return nil, fmt.Errorf("received an HTTP %d response", resp.StatusCode)
+}
+
+func (c *Client) UpdateAccountOrderClientExtensions(accountID AccountID, orderSpecifier OrderSpecifier, updateClientExtensionsRequest UpdateClientExtensionsRequest) (*UpdateClientExtensionsResponse, error) {
+	var buf bytes.Buffer
+	err := json.NewEncoder(&buf).Encode(updateClientExtensionsRequest)
+	if err != nil {
+		return nil, err
+	}
+	req, err := http.NewRequest(http.MethodPut, fmt.Sprintf("%s/v3/accounts/%s/orders/%s/clientExtensions", c.baseUrl, accountID, orderSpecifier), &buf)
+	if err != nil {
+		return nil, err
+	}
+	c.setHeaders(req)
+	resp, err := c.conn.Do(req)
+	if err != nil {
+		return nil, err
+	}
+	switch resp.StatusCode {
+	case http.StatusOK:
+		var okResponse UpdateClientExtensionsResponse
+		err = json.NewDecoder(resp.Body).Decode(&okResponse)
+		if err != nil {
+			return nil, err
+		}
+		return &okResponse, nil
+	case http.StatusBadRequest:
+		var errorResponse UpdateClientExtensionsErrorResponse
+		err = json.NewDecoder(resp.Body).Decode(&errorResponse)
+		if err != nil {
+			return nil, err
+		}
+		return nil, errorResponse
+	}
+	return nil, fmt.Errorf("received an HTTP %d response", resp.StatusCode)
+}

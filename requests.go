@@ -53,3 +53,30 @@ type GetInstrumentCandlesRequest struct {
 	// The day of the week used for granularities that have weekly alignment. [default=Friday]
 	WeeklyAlignment *WeeklyAlignment `url:"weeklyAlignment,omitempty"`
 }
+
+type GetAccountOrdersRequest struct {
+	// List of Order IDs to retrieve
+	IDs []OrderID `url:"ids,comma"`
+
+	// The state to filter the requested Orders by [default=PENDING]
+	State *OrderStateFilter `url:"state"`
+
+	// The instrument to filter the requested orders by
+	Instrument *string `url:"instrument"`
+
+	// The maximum number of Orders to return [default=50, maximum=500]
+	Count int `url:"count"`
+
+	// The maximum Order ID to return. If not provided the most recent Orders in the Account are returned
+	BeforeID OrderID `url:"beforeID"`
+}
+
+type UpdateClientExtensionsRequest struct {
+	// The ClientExtensions to update for the Order. Do not set, modify, or delete clientExtensions if your account is
+	// associated with MT4.
+	ClientExtensions ClientExtensions `json:"clientExtensions"`
+
+	// The ClientExtensions to update for the Trade created when the Order is filled. Do not set, modify, or delete
+	// clientExtensions if your account is associated with MT4.
+	TradeClientExtensions ClientExtensions `json:"tradeClientExtensions"`
+}
