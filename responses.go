@@ -1,5 +1,7 @@
 package oanda_sdk
 
+import "time"
+
 type GetAccountsResponse struct {
 	// The list of Accounts the client is authorized to access and their associated properties.
 	Accounts []AccountProperties `json:"accounts"`
@@ -473,4 +475,43 @@ type CloseAccountInstrumentPositionErrorResponse struct {
 
 func (er CloseAccountInstrumentPositionErrorResponse) Error() string {
 	return er.ErrorMessage
+}
+
+type GetAccountTransactionsResponse struct {
+	// The starting time provided in the request.
+	From time.Time `json:"from"`
+
+	// The ending time provided in the request.
+	To time.Time `json:"to"`
+
+	// The pageSize provided in the request
+	PageSize int `json:"pageSize"`
+
+	// The Transaction-type filter provided in the request
+	Type []TransactionFilter `json:"type"`
+
+	// The number of Transactions that are contained in the pages returned
+	Count int `json:"count"`
+
+	// The list of URLs that represent idrange queries providing the data for each page in the query results
+	Pages []string `json:"pages"`
+
+	// The ID of the most recent Transaction created for the Account
+	LastTransactionID TransactionID `json:"lastTransactionID"`
+}
+
+type GetAccountTransactionResponse struct {
+	// The details of the Transaction requested
+	Transaction Transaction `json:"transaction"`
+
+	// The ID of the most recent Transaction created for the Account
+	LastTransactionID TransactionID `json:"lastTransactionID"`
+}
+
+type GetAccountTransactionsRangeResponse struct {
+	// The list of Transactions that satisfy the request.
+	Transactions []Transaction `json:"transactions"`
+
+	// The ID of the most recent Transaction created for the Account
+	LastTransactionID TransactionID `json:"lastTransactionID"`
 }

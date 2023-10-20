@@ -746,3 +746,103 @@ func (c *Client) CloseAccountInstrumentPosition(accountId string, instrument str
 	}
 	return nil, fmt.Errorf("received an HTTP %d response", resp.StatusCode)
 }
+
+// GetAccountTransactions gets a list of Transaction pages that satisfy a time-based Transaction query.
+func (c *Client) GetAccountTransactions(accountId string, request GetAccountTransactionsRequest) (*GetAccountTransactionsResponse, error) {
+	urlQuery, err := query.Values(request)
+	if err != nil {
+		return nil, err
+	}
+	req, err := http.NewRequest(http.MethodGet, fmt.Sprintf("%s/v3/accounts/%s/transactions?%s", c.baseUrl, accountId, urlQuery), nil)
+	if err != nil {
+		return nil, err
+	}
+	c.setHeaders(req)
+	resp, err := c.conn.Do(req)
+	if err != nil {
+		return nil, err
+	}
+	if resp.StatusCode != http.StatusOK {
+		return nil, fmt.Errorf("received an HTTP %d response", resp.StatusCode)
+	}
+	var getAccountTransactionsResponse GetAccountTransactionsResponse
+	err = json.NewDecoder(resp.Body).Decode(&getAccountTransactionsResponse)
+	if err != nil {
+		return nil, err
+	}
+	return &getAccountTransactionsResponse, nil
+}
+
+// GetAccountTransaction gets the details of a single Account Transaction
+func (c *Client) GetAccountTransaction(accountId string, transactionId string) (*GetAccountTransactionResponse, error) {
+	req, err := http.NewRequest(http.MethodGet, fmt.Sprintf("%s/v3/accounts/%s/transactions/%s", c.baseUrl, accountId, transactionId), nil)
+	if err != nil {
+		return nil, err
+	}
+	c.setHeaders(req)
+	resp, err := c.conn.Do(req)
+	if err != nil {
+		return nil, err
+	}
+	if resp.StatusCode != http.StatusOK {
+		return nil, fmt.Errorf("received an HTTP %d response", resp.StatusCode)
+	}
+	var getAccountTransactionResponse GetAccountTransactionResponse
+	err = json.NewDecoder(resp.Body).Decode(&getAccountTransactionResponse)
+	if err != nil {
+		return nil, err
+	}
+	return &getAccountTransactionResponse, nil
+}
+
+// GetAccountTransactionsByIdRange gets a range of Transactions for an Account based on the TransactionIDs.
+func (c *Client) GetAccountTransactionsByIdRange(accountId string, request GetAccountTransactionsByIdRangeRequest) (*GetAccountTransactionsRangeResponse, error) {
+	urlQuery, err := query.Values(request)
+	if err != nil {
+		return nil, err
+	}
+	req, err := http.NewRequest(http.MethodGet, fmt.Sprintf("%s/v3/accounts/%s/transactions/idrange?", c.baseUrl, accountId, urlQuery), nil)
+	if err != nil {
+		return nil, err
+	}
+	c.setHeaders(req)
+	resp, err := c.conn.Do(req)
+	if err != nil {
+		return nil, err
+	}
+	if resp.StatusCode != http.StatusOK {
+		return nil, fmt.Errorf("received an HTTP %d reponse", resp.StatusCode)
+	}
+	var getAccountTransactionsResponse GetAccountTransactionsRangeResponse
+	err = json.NewDecoder(resp.Body).Decode(&getAccountTransactionsResponse)
+	if err != nil {
+		return nil, err
+	}
+	return &getAccountTransactionsResponse, nil
+}
+
+// GetAccountTransactionsSinceId gets a range of Transactions for an Account starting at a provided TransactionID
+func (c *Client) GetAccountTransactionsSinceId(accountId string, request GetAccountTransactionsSinceIdRequest) (*GetAccountTransactionsRangeResponse, error) {
+	urlQuery, err := query.Values(request)
+	if err != nil {
+		return nil, err
+	}
+	req, err := http.NewRequest(http.MethodGet, fmt.Sprintf("%s/v3/accounts/%s/transactions/idrange?", c.baseUrl, accountId, urlQuery), nil)
+	if err != nil {
+		return nil, err
+	}
+	c.setHeaders(req)
+	resp, err := c.conn.Do(req)
+	if err != nil {
+		return nil, err
+	}
+	if resp.StatusCode != http.StatusOK {
+		return nil, fmt.Errorf("received an HTTP %d reponse", resp.StatusCode)
+	}
+	var getAccountTransactionsResponse GetAccountTransactionsRangeResponse
+	err = json.NewDecoder(resp.Body).Decode(&getAccountTransactionsResponse)
+	if err != nil {
+		return nil, err
+	}
+	return &getAccountTransactionsResponse, nil
+}

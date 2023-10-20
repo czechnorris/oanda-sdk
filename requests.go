@@ -58,17 +58,20 @@ type GetAccountOrdersRequest struct {
 	// List of Order IDs to retrieve
 	IDs []OrderID `url:"ids,comma"`
 
-	// The state to filter the requested Orders by [default=PENDING]
-	State *OrderStateFilter `url:"state"`
+	// The state to filter the requested Orders by
+	// Default: PENDING
+	State *OrderStateFilter `url:"state,omitempty"`
 
 	// The instrument to filter the requested orders by
-	Instrument *string `url:"instrument"`
+	Instrument *string `url:"instrument,omitempty"`
 
-	// The maximum number of Orders to return [default=50, maximum=500]
-	Count int `url:"count"`
+	// The maximum number of Orders to return
+	// Default: 50
+	// Maximum: 500
+	Count *int `url:"count,omitempty"`
 
-	// The maximum Order ID to return. If not provided the most recent Orders in the Account are returned
-	BeforeID OrderID `url:"beforeID"`
+	// The maximum OrderID to return. If not provided the most recent Orders in the Account are returned
+	BeforeID *OrderID `url:"beforeID,omitempty"`
 }
 
 type UpdateClientExtensionsRequest struct {
@@ -85,17 +88,20 @@ type GetAccountTradesRequest struct {
 	// List of Trade IDs to retrieve.
 	IDs []TradeID `url:"ids,comma"`
 
-	// The state to filter the requested Trades by. [default=OPEN]
-	State *TradeStateFilter `url:"state"`
+	// The state to filter the requested Trades by.
+	// Ddefault: OPEN
+	State *TradeStateFilter `url:"state,omitempty"`
 
 	// The instrument to filter the requested Trades by.
-	Instrument *string `url:"instrument"`
+	Instrument *string `url:"instrument,omitempty"`
 
-	// The maximum number of Trades to return. [default=50, maximum=500]
-	Count int `url:"count"`
+	// The maximum number of Trades to return.
+	// Default: 50
+	// Maximum: 500
+	Count *int `url:"count,omitempty"`
 
 	// The maximum Trade ID to return. If not provided the most recent Trades in the Account are returned.
-	BeforeID TradeID `url:"beforeID"`
+	BeforeID *TradeID `url:"beforeID,omitempty"`
 }
 
 type UpdateAccountTradeOrdersRequest struct {
@@ -153,4 +159,41 @@ type CloseAccountInstrumentPositionRequest struct {
 
 	// The client extensions to add to the MarketOrder used to close the short position.
 	ShortClientExtensions ClientExtensions
+}
+
+type GetAccountTransactionsRequest struct {
+	// The starting time (inclusive) of the time range for the Transactions being queried.
+	// Default: Account Creation Time
+	From *time.Time `url:"from,omitempty"`
+
+	// The ending time (inclusive) of the time range for the Transactions being queried.
+	// Default: Request Time
+	To *time.Time `url:"to,omitempty"`
+
+	// The number of Transactions to include in each page of the results.
+	// Default: 100
+	// Maximum: 1000
+	PageSize *int `url:"pageSize,omitempty"`
+
+	// A filter for restricting the types of Transactions to retrieve.
+	Type []TransactionFilter `url:"type,comma"`
+}
+
+type GetAccountTransactionsByIdRangeRequest struct {
+	// The starting TransactionID (inclusive) to fetch.
+	From TransactionID `url:"from"`
+
+	// The ending TransactionID (inclusive) to fetch.
+	To TransactionID `url:"to"`
+
+	// A filter for restricting the types of Transactions to retrieve.
+	Type []TransactionFilter `url:"type,comma,omitempty"`
+}
+
+type GetAccountTransactionsSinceIdRequest struct {
+	// The ID of the last Transaction fetched. This query will return all Transactions newer than the TransactionID.
+	Id TransactionID `url:"id"`
+
+	// A filter for restricting the types of Transactions to retrieve.
+	Type []TransactionFilter `url:"type,comma,omitempty"`
 }
