@@ -469,3 +469,174 @@ func (c *Client) UpdateAccountOrderClientExtensions(accountID AccountID, orderSp
 	}
 	return nil, fmt.Errorf("received an HTTP %d response", resp.StatusCode)
 }
+
+// GetAccountTrades gets a list of Trades for an Account
+func (c *Client) GetAccountTrades(accountID string, request GetAccountTradesRequest) (*GetAccountTradesResponse, error) {
+	urlQuery, err := query.Values(request)
+	if err != nil {
+		return nil, err
+	}
+	req, err := http.NewRequest(http.MethodGet, fmt.Sprintf("%s/v3/accounts/%s/trades?%s", c.baseUrl, accountID, urlQuery.Encode()), nil)
+	if err != nil {
+		return nil, err
+	}
+	c.setHeaders(req)
+	resp, err := c.conn.Do(req)
+	if err != nil {
+		return nil, err
+	}
+	if resp.StatusCode != http.StatusOK {
+		return nil, fmt.Errorf("received an HTTP %d response", resp.StatusCode)
+	}
+	var accountTradesResponse GetAccountTradesResponse
+	err = json.NewDecoder(resp.Body).Decode(&accountTradesResponse)
+	if err != nil {
+		return nil, err
+	}
+	return &accountTradesResponse, nil
+}
+
+// GetAccountOpenTrades gets the list of open Trades for an Account
+func (c *Client) GetAccountOpenTrades(accountId string) (*GetAccountTradesResponse, error) {
+	req, err := http.NewRequest(http.MethodGet, fmt.Sprintf("%s/v3/accounts/%s/openTrades", c.baseUrl, accountId), nil)
+	if err != nil {
+		return nil, err
+	}
+	c.setHeaders(req)
+	resp, err := c.conn.Do(req)
+	if err != nil {
+		return nil, err
+	}
+	if resp.StatusCode != http.StatusOK {
+		return nil, fmt.Errorf("received an HTTP %d response", resp.StatusCode)
+	}
+	var accountOpenTradesResponse GetAccountTradesResponse
+	err = json.NewDecoder(resp.Body).Decode(&accountOpenTradesResponse)
+	if err != nil {
+		return nil, err
+	}
+	return &accountOpenTradesResponse, nil
+}
+
+// GetAccountTrade gets the details of a specific Trade in an Account
+func (c *Client) GetAccountTrade(accountId string, tradeSpecifier string) (*GetAccountTradeResponse, error) {
+	req, err := http.NewRequest(http.MethodGet, fmt.Sprintf("%s/v3/accounts/%s/trades/%s", c.baseUrl, accountId, tradeSpecifier), nil)
+	if err != nil {
+		return nil, err
+	}
+	c.setHeaders(req)
+	resp, err := c.conn.Do(req)
+	if err != nil {
+		return nil, err
+	}
+	if resp.StatusCode != http.StatusOK {
+		return nil, fmt.Errorf("received an HTTP %d response", resp.StatusCode)
+	}
+	var accountTradeResponse GetAccountTradeResponse
+	err = json.NewDecoder(resp.Body).Decode(&accountTradeResponse)
+	if err != nil {
+		return nil, err
+	}
+	return &accountTradeResponse, nil
+}
+
+// CloseAccountTrade closes (partially or fully) a specific open Trade in an Account
+func (c *Client) CloseAccountTrade(accountId string, tradeSpecifier string) (*CloseAccountTradeResponse, error) {
+	req, err := http.NewRequest(http.MethodPut, fmt.Sprintf("%s/v3/accounts/%s/trades/%s/close", c.baseUrl, accountId, tradeSpecifier), nil)
+	if err != nil {
+		return nil, err
+	}
+	c.setHeaders(req)
+	resp, err := c.conn.Do(req)
+	if err != nil {
+		return nil, err
+	}
+	switch resp.StatusCode {
+	case http.StatusOK:
+		var closeAccountTradeResponse CloseAccountTradeResponse
+		err = json.NewDecoder(resp.Body).Decode(&closeAccountTradeResponse)
+		if err != nil {
+			return nil, err
+		}
+		return &closeAccountTradeResponse, nil
+	case http.StatusBadRequest:
+		fallthrough
+	case http.StatusNotFound:
+		var errorResponse CloseAccountTradeErrorResponse
+		err = json.NewDecoder(resp.Body).Decode(&errorResponse)
+		if err != nil {
+			return nil, err
+		}
+		return nil, errorResponse
+	}
+	return nil, fmt.Errorf("received an HTTP %d response", resp.StatusCode)
+}
+
+// UpdateAccountTradeClientExtensions updates the ClientExtensions for a Trade. Do not add, update or delete the
+// ClientExtensions if your account is associated with MT4.
+func (c *Client) UpdateAccountTradeClientExtensions(accountID string, tradeSpecifier string) (*UpdateAccountTradeResponse, error) {
+	req, err := http.NewRequest(http.MethodPut, fmt.Sprintf("%s/v3/accounts/%s/trades/%s/clientExtensions", c.baseUrl, accountID, tradeSpecifier), nil)
+	if err != nil {
+		return nil, err
+	}
+	c.setHeaders(req)
+	resp, err := c.conn.Do(req)
+	if err != nil {
+		return nil, err
+	}
+	switch resp.StatusCode {
+	case http.StatusOK:
+		var updateAccountTradeResponse UpdateAccountTradeResponse
+		err = json.NewDecoder(resp.Body).Decode(&updateAccountTradeResponse)
+		if err != nil {
+			return nil, err
+		}
+		return &updateAccountTradeResponse, nil
+	case http.StatusBadRequest:
+		fallthrough
+	case http.StatusNotFound:
+		var errorResponse UpdateAccountTradeErrorResponse
+		err = json.NewDecoder(resp.Body).Decode(&errorResponse)
+		if err != nil {
+			return nil, err
+		}
+		return nil, errorResponse
+	}
+	return nil, fmt.Errorf("received an HTTP %d response", resp.StatusCode)
+}
+
+// UpdateAccountTradeOrders creates, replaces and cancels a Trade's dependent Orders (TakeProfit, StopLoss and
+// TrailingStopLoss) through the Trade itself
+func (c *Client) UpdateAccountTradeOrders(accountId string, tradeSpecifier string, updateAccountTradeOrdersRequest UpdateAccountTradeOrdersRequest) (*UpdateAccountTradeOrdersResponse, error) {
+	var buf bytes.Buffer
+	err := json.NewEncoder(&buf).Encode(updateAccountTradeOrdersRequest)
+	if err != nil {
+		return nil, err
+	}
+	req, err := http.NewRequest(http.MethodPut, fmt.Sprintf("%s/v3/accounts/%s/trades/%s/orders", c.baseUrl, accountId, tradeSpecifier), &buf)
+	if err != nil {
+		return nil, err
+	}
+	c.setHeaders(req)
+	resp, err := c.conn.Do(req)
+	if err != nil {
+		return nil, err
+	}
+	switch resp.StatusCode {
+	case http.StatusOK:
+		var updateAccountTradeOrdersResponse UpdateAccountTradeOrdersResponse
+		err = json.NewDecoder(resp.Body).Decode(&updateAccountTradeOrdersResponse)
+		if err != nil {
+			return nil, err
+		}
+		return &updateAccountTradeOrdersResponse, nil
+	case http.StatusBadRequest:
+		var errorResponse UpdateAccountTradeOrdersErrorResponse
+		err = json.NewDecoder(resp.Body).Decode(&errorResponse)
+		if err != nil {
+			return nil, err
+		}
+		return nil, errorResponse
+	}
+	return nil, fmt.Errorf("received an HTTP %d response", resp.StatusCode)
+}

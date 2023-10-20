@@ -235,3 +235,176 @@ type UpdateClientExtensionsErrorResponse struct {
 func (er UpdateClientExtensionsErrorResponse) Error() string {
 	return er.ErrorMessage
 }
+
+type GetAccountTradesResponse struct {
+	// The list of Trade detail objects
+	Trades []Trade `json:"trades"`
+
+	// The ID of the most recent Transaction created for the Account
+	LastTransactionID TransactionID `json:"lastTransactionID"`
+}
+
+type GetAccountTradeResponse struct {
+	// The details of the requested trade
+	Trade Trade `json:"trade"`
+
+	// The ID of the most recent Transaction created for the Account
+	LastTransactionID TransactionID `json:"lastTransactionID"`
+}
+
+type CloseAccountTradeResponse struct {
+	// The MarketOrder Transaction created to close the Trade.
+	OrderCreateTransaction MarketOrderTransaction `json:"orderCreateTransaction"`
+
+	// The OrderFill Transaction that fills the Trade-closing MarketOrder and closes the Trade.
+	OrderFillTransaction OrderFillTransaction `json:"orderFillTransaction"`
+
+	// The OrderCancel Transaction that immediately cancelled the Trade-closing MarketOrder.
+	OrderCancelTransaction OrderCancelTransaction `json:"orderCancelTransaction"`
+
+	// The IDs of all Transactions that were created while satisfying the request.
+	RelatedTransactionIDs []TransactionID `json:"relatedTransactionIDs"`
+
+	// The ID of the most recent Transaction created for the Account
+	LastTransactionID TransactionID `json:"lastTransactionID"`
+}
+
+type CloseAccountTradeErrorResponse struct {
+	// The MarketOrderReject Transaction that rejects the creation of the Trade-closing MarketOrder. Only present if the
+	// Account exists.
+	OrderRejectTransaction MarketOrderRejectTransaction `json:"orderRejectTransaction"`
+
+	// The ID of the most recent Transaction created for the Account. Only present if the Account exists.
+	LastTransactionID TransactionID `json:"lastTransactionID"`
+
+	// The IDs of all Transactions that were created while satisfying the request. Only present if the Account exists.
+	RelatedTransactionIDs []TransactionID `json:"relatedTransactionIDs"`
+
+	// The code of the error that has occurred. This field may not be returned for some errors.
+	ErrorCode *string `json:"errorCode"`
+
+	// The human-readable description of the error that has occurred.
+	ErrorMessage string `json:"errorMessage"`
+}
+
+func (er CloseAccountTradeErrorResponse) Error() string {
+	return er.ErrorMessage
+}
+
+type UpdateAccountTradeResponse struct {
+	// The Transaction that updates the Trade’s Client Extensions.
+	TradeClientExtensionsModifyTransaction TradeClientExtensionsModifyTransaction `json:"tradeClientExtensionsModifyTransaction"`
+
+	// The IDs of all Transactions that were created while satisfying the request.
+	RelatedTransactionIDs []TransactionID `json:"relatedTransactionIDs"`
+
+	// The ID of the most recent Transaction created for the Account
+	LastTransactionID TransactionID `json:"lastTransactionID"`
+}
+
+type UpdateAccountTradeErrorResponse struct {
+	// The Transaction that rejects the modification of the Trade’s Client Extensions.
+	TradeClientExtensionsModifyRejectTransaction TradeClientExtensionsModifyRejectTransaction `json:"tradeClientExtensionsModifyRejectTransaction"`
+
+	// The ID of the most recent Transaction created for the Account.
+	LastTransactionID TransactionID `json:"lastTransactionID"`
+
+	// The IDs of all Transactions that were created while satisfying the request.
+	RelatedTransactionIDs []TransactionID `json:"relatedTransactionIDs"`
+
+	// The code of the error that has occurred. This field may not be returned for some errors.
+	ErrorCode *string `json:"errorCode"`
+
+	// The human-readable description of the error that has occurred.
+	ErrorMessage string `json:"errorMessage"`
+}
+
+func (er UpdateAccountTradeErrorResponse) Error() string {
+	return er.ErrorMessage
+}
+
+type UpdateAccountTradeOrdersResponse struct {
+	// The Transaction created that cancels the Trade’s existing TakeProfitOrder.
+	TakeProfitOrderCancelTransaction *OrderCancelTransaction `json:"takeProfitOrderCancelTransaction"`
+
+	// The Transaction created that creates a new TakeProfitOrder for the Trade.
+	TakeProfitOrderTransaction *TakeProfitOrderTransaction `json:"takeProfitOrderTransaction"`
+
+	// The Transaction created that immediately fills the Trade’s new TakeProfitOrder. Only provided if the new TakeProfitOrder was immediately filled.
+	TakeProfitOrderFillTransaction *OrderFillTransaction `json:"takeProfitOrderFillTransaction"`
+
+	// The Transaction created that immediately cancels the Trade’s new TakeProfitOrder. Only provided if the new TakeProfitOrder was immediately cancelled.
+	TakeProfitOrderCreatedCancelTransaction *OrderCancelTransaction `json:"takeProfitOrderCreatedCancelTransaction"`
+
+	// The Transaction created that cancels the Trade’s existing StopLossOrder.
+	StopLossOrderCancelTransaction *OrderCancelTransaction `json:"stopLossOrderCancelTransaction"`
+
+	// The Transaction created that creates a new StopLossOrder for the Trade.
+	StopLossOrderTransaction *StopLossOrderTransaction `json:"stopLossOrderTransaction"`
+
+	// The Transaction created that immediately fills the Trade’s new StopOrder. Only provided if the new StopLossOrder was immediately filled.
+	StopLossOrderFillTransaction *OrderFillTransaction `json:"stopLossOrderFillTransaction"`
+
+	// The Transaction created that immediately cancels the Trade’s new StopLossOrder. Only provided if the new StopLossOrder was immediately cancelled.
+	StopLossOrderCreatedCancelTransaction *OrderCancelTransaction `json:"stopLossOrderCreatedCancelTransaction"`
+
+	// The Transaction created that cancels the Trade’s existing TrailingStopLossOrder.
+	TrailingStopLossOrderCancelTransaction *OrderCancelTransaction `json:"trailingStopLossOrderCancelTransaction"`
+
+	// The Transaction created that creates a new TrailingStopLossOrder for the Trade.
+	TrailingStopLossOrderTransaction *TrailingStopLossOrderTransaction `json:"trailingStopLossOrderTransaction"`
+
+	// The Transaction created that cancels the Trade’s existing Guaranteed StopLossOrder.
+	GuaranteedStopLossOrderCancelTransaction *OrderCancelTransaction `json:"guaranteedStopLossOrderCancelTransaction"`
+
+	// The Transaction created that creates a new GuaranteedStopLossOrder for the Trade.
+	GuaranteedStopLossOrderTransaction *GuaranteedStopLossOrderTransaction `json:"guaranteedStopLossOrderTransaction"`
+
+	// The IDs of all Transactions that were created while satisfying the request.
+	RelatedTransactionIDs []TransactionID `json:"relatedTransactionIDs"`
+
+	// The ID of the most recent Transaction created for the Account
+	LastTransactionID TransactionID `json:"lastTransactionID"`
+}
+
+type UpdateAccountTradeOrdersErrorResponse struct {
+	// An OrderCancelRejectTransaction represents the rejection of the cancellation of an Order in the client’s Account.
+	TakeProfitOrderCancelRejectTransaction *OrderCancelRejectTransaction `json:"takeProfitOrderCancelRejectTransaction"`
+
+	// A TakeProfitOrderRejectTransaction represents the rejection of the creation of a TakeProfitOrder.
+	TakeProfitOrderRejectTransaction *TakeProfitOrderRejectTransaction `json:"takeProfitOrderRejectTransaction"`
+
+	// An OrderCancelRejectTransaction represents the rejection of the cancellation of an Order in the client’s Account.
+	StopLossOrderCancelRejectTransaction *OrderCancelRejectTransaction `json:"stopLossOrderCancelRejectTransaction"`
+
+	// A StopLossOrderRejectTransaction represents the rejection of the creation of a StopLossOrder.
+	StopLossOrderRejectTransaction *StopLossOrderRejectTransaction `json:"stopLossOrderRejectTransaction"`
+
+	// An OrderCancelRejectTransaction represents the rejection of the cancellation of an Order in the client’s Account.
+	TrailingStopLossOrderCancelRejectTransaction *OrderCancelRejectTransaction `json:"trailingStopLossOrderCancelRejectTransaction"`
+
+	// A TrailingStopLossOrderRejectTransaction represents the rejection of the creation of a TrailingStopLossOrder.
+	TrailingStopLossOrderRejectTransaction *TrailingStopLossOrderRejectTransaction `json:"trailingStopLossOrderRejectTransaction"`
+
+	// An OrderCancelRejectTransaction represents the rejection of the cancellation of an Order in the client’s Account.
+	GuaranteedStopLossOrderCancelRejectTransaction *OrderCancelRejectTransaction `json:"guaranteedStopLossOrderCancelRejectTransaction"`
+
+	// A GuaranteedStopLossOrderRejectTransaction represents the rejection of the creation of a GuaranteedStopLossOrder.
+	GuaranteedStopLossOrderRejectTransaction *GuaranteedStopLossOrderRejectTransaction `json:"guaranteedStopLossOrderRejectTransaction"`
+
+	// The ID of the most recent Transaction created for the Account.
+	LastTransactionID TransactionID `json:"lastTransactionID"`
+
+	// The IDs of all Transactions that were created while satisfying the request.
+	RelatedTransactionIDs []TransactionID `json:"relatedTransactionIDs"`
+
+	// The code of the error that has occurred. This field may not be returned for some errors.
+	ErrorCode *string `json:"errorCode"`
+
+	// The human-readable description of the error that has occurred.
+	ErrorMessage string `json:"errorMessage"`
+}
+
+func (er UpdateAccountTradeOrdersErrorResponse) Error() string {
+	return er.ErrorMessage
+}

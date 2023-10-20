@@ -80,3 +80,55 @@ type UpdateClientExtensionsRequest struct {
 	// clientExtensions if your account is associated with MT4.
 	TradeClientExtensions ClientExtensions `json:"tradeClientExtensions"`
 }
+
+type GetAccountTradesRequest struct {
+	// List of Trade IDs to retrieve.
+	IDs []TradeID `url:"ids,comma"`
+
+	// The state to filter the requested Trades by. [default=OPEN]
+	State *TradeStateFilter `url:"state"`
+
+	// The instrument to filter the requested Trades by.
+	Instrument *string `url:"instrument"`
+
+	// The maximum number of Trades to return. [default=50, maximum=500]
+	Count int `url:"count"`
+
+	// The maximum Trade ID to return. If not provided the most recent Trades in the Account are returned.
+	BeforeID TradeID `url:"beforeID"`
+}
+
+type UpdateAccountTradeOrdersRequest struct {
+	// The specification of the TakeProfit to create/modify/cancel. If
+	// takeProfit is set to null, the TakeProfitOrder will be cancelled if it
+	// exists. If takeProfit is not provided, the existing TakeProfitOrder
+	// will not be modified. If a sub-field of takeProfit is not specified, that
+	// field will be set to a default value on create, and be inherited by the
+	// replacing order on modify.
+	TakeProfit *TakeProfitDetails `json:"takeProfit"`
+
+	// The specification of the StopLoss to create/modify/cancel. If stopLoss
+	// is set to null, the StopLossOrder will be cancelled if it exists. If
+	// stopLoss is not provided, the existing StopLossOrder will not be
+	// modified. If a sub-field of stopLoss is not specified, that field will be
+	// set to a default value on create, and be inherited by the replacing order
+	// on modify.
+	StopLoss *StopLossDetails `json:"stopLoss"`
+
+	// The specification of the TrailingStopLoss to create/modify/cancel. If
+	// trailingStopLoss is set to null, the TrailingStopLossOrder will be
+	// cancelled if it exists. If trailingStopLoss is not provided, the existing
+	// TrailingStopLossOrder will not be modified. If a sub-field of
+	// trailingStopLoss is not specified, that field will be set to a default
+	// value on create, and be inherited by the replacing order on modify.
+	TrailingStopLoss *TrailingStopLossDetails `json:"trailingStopLoss"`
+
+	// The specification of the GuaranteedStopLoss to create/modify/cancel. If
+	// guaranteedStopLoss is set to null, the GuaranteedStopLossOrder will be
+	// cancelled if it exists. If guaranteedStopLoss is not provided, the
+	// existing GuaranteedStopLossOrder will not be modified. If a sub-field
+	// of guaranteedStopLoss is not specified, that field will be set to a
+	// default value on create, and be inherited by the replacing order on
+	// modify.
+	GuaranteedStopLoss *GuaranteedStopLossDetails `json:"guaranteedStopLoss"`
+}
