@@ -640,3 +640,109 @@ func (c *Client) UpdateAccountTradeOrders(accountId string, tradeSpecifier strin
 	}
 	return nil, fmt.Errorf("received an HTTP %d response", resp.StatusCode)
 }
+
+// GetAccountPositions lists all Positions for an Account. The Positions returned are for every instrument that has had
+// a position during the lifetime of the Account.
+func (c *Client) GetAccountPositions(accountId string) (*GetAccountPositionsResponse, error) {
+	req, err := http.NewRequest(http.MethodGet, fmt.Sprintf("%s/v3/accounts/%s/positions", c.baseUrl, accountId), nil)
+	if err != nil {
+		return nil, err
+	}
+	c.setHeaders(req)
+	resp, err := c.conn.Do(req)
+	if err != nil {
+		return nil, err
+	}
+	if resp.StatusCode != http.StatusOK {
+		return nil, fmt.Errorf("received an HTTP %d response", resp.StatusCode)
+	}
+	var getAccountPositionsResponse GetAccountPositionsResponse
+	err = json.NewDecoder(resp.Body).Decode(&getAccountPositionsResponse)
+	if err != nil {
+		return nil, err
+	}
+	return &getAccountPositionsResponse, nil
+}
+
+// GetAccountOpenPositions lists all open Positions for an Account. An open Position is a Position in an Account that
+// currently has a Trade opened for it.
+func (c *Client) GetAccountOpenPositions(accountId string) (*GetAccountPositionsResponse, error) {
+	req, err := http.NewRequest(http.MethodGet, fmt.Sprintf("%s/v3/accounts/%s/openPositions", c.baseUrl, accountId), nil)
+	if err != nil {
+		return nil, err
+	}
+	c.setHeaders(req)
+	resp, err := c.conn.Do(req)
+	if err != nil {
+		return nil, err
+	}
+	if resp.StatusCode != http.StatusOK {
+		return nil, fmt.Errorf("received an HTTP %d response", resp.StatusCode)
+	}
+	var getAccountOpenPositionsResponse GetAccountPositionsResponse
+	err = json.NewDecoder(resp.Body).Decode(&getAccountOpenPositionsResponse)
+	if err != nil {
+		return nil, err
+	}
+	return &getAccountOpenPositionsResponse, nil
+}
+
+// GetAccountInstrumentPosition gets the details of a single Instrument's Position in an Account. The Position may be
+// open or not.
+func (c *Client) GetAccountInstrumentPosition(accountId string, instrument string) (*GetAccountInstrumentPositionResponse, error) {
+	req, err := http.NewRequest(http.MethodGet, fmt.Sprintf("%s/v3/accounts/%s/positions/%s", c.baseUrl, accountId, instrument), nil)
+	if err != nil {
+		return nil, err
+	}
+	c.setHeaders(req)
+	resp, err := c.conn.Do(req)
+	if err != nil {
+		return nil, err
+	}
+	if resp.StatusCode != http.StatusOK {
+		return nil, fmt.Errorf("received an HTTP %d repsonse", resp.StatusCode)
+	}
+	var getAccountInstrumentPositionResponse GetAccountInstrumentPositionResponse
+	err = json.NewDecoder(resp.Body).Decode(&getAccountInstrumentPositionResponse)
+	if err != nil {
+		return nil, err
+	}
+	return &getAccountInstrumentPositionResponse, nil
+}
+
+// CloseAccountInstrumentPosition closeouts the opan Position for a specific Instrument in an Account.
+func (c *Client) CloseAccountInstrumentPosition(accountId string, instrument string, request CloseAccountInstrumentPositionRequest) (*CloseAccountInstrumentPositionResponse, error) {
+	var buf bytes.Buffer
+	err := json.NewEncoder(&buf).Encode(request)
+	if err != nil {
+		return nil, err
+	}
+	req, err := http.NewRequest(http.MethodPut, fmt.Sprintf("%s/v3/accounts/%s/positions/%s/close", c.baseUrl, accountId, instrument), &buf)
+	if err != nil {
+		return nil, err
+	}
+	c.setHeaders(req)
+	resp, err := c.conn.Do(req)
+	if err != nil {
+		return nil, err
+	}
+	switch resp.StatusCode {
+	case http.StatusOK:
+		var closeAccountInstrumentPositionResponse CloseAccountInstrumentPositionResponse
+		err = json.NewDecoder(resp.Body).Decode(&closeAccountInstrumentPositionResponse)
+		if err != nil {
+			return nil, err
+		}
+		return &closeAccountInstrumentPositionResponse, nil
+	case http.StatusBadRequest:
+		fallthrough
+	case http.StatusNotFound:
+		var errorResponse CloseAccountInstrumentPositionErrorResponse
+		err = json.NewDecoder(resp.Body).Decode(&errorResponse)
+		if err != nil {
+			return nil, err
+		}
+		return nil, errorResponse
+	}
+	return nil, fmt.Errorf("received an HTTP %d response", resp.StatusCode)
+}
