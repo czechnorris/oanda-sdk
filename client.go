@@ -1,6 +1,7 @@
 package oanda_sdk
 
 import (
+	"bufio"
 	"bytes"
 	"encoding/json"
 	"fmt"
@@ -801,7 +802,7 @@ func (c *Client) GetAccountTransactionsByIdRange(accountId string, request GetAc
 	if err != nil {
 		return nil, err
 	}
-	req, err := http.NewRequest(http.MethodGet, fmt.Sprintf("%s/v3/accounts/%s/transactions/idrange?", c.baseUrl, accountId, urlQuery), nil)
+	req, err := http.NewRequest(http.MethodGet, fmt.Sprintf("%s/v3/accounts/%s/transactions/idrange?%s", c.baseUrl, accountId, urlQuery), nil)
 	if err != nil {
 		return nil, err
 	}
@@ -845,6 +846,46 @@ func (c *Client) GetAccountTransactionsSinceId(accountId string, request GetAcco
 		return nil, err
 	}
 	return &getAccountTransactionsResponse, nil
+}
+
+func (c *Client) GetAccountTransactionsStream(accountId string) (<-chan Transaction, error) {
+	req, err := http.NewRequest(http.MethodGet, fmt.Sprintf("%s/v3/accounts/%s/transactions/stream", c.baseUrl, accountId), nil)
+	if err != nil {
+		return nil, err
+	}
+	c.setHeaders(req)
+	resp, err := c.conn.Do(req)
+	if err != nil {
+		return nil, err
+	}
+	if resp.StatusCode != http.StatusOK {
+		return nil, fmt.Errorf("received an HTTP %d response", resp.StatusCode)
+	}
+	transactions := make(chan Transaction)
+	go func() {
+		reader := bufio.NewReader(resp.Body)
+		for {
+			line, err := reader.ReadBytes('\n')
+			type message struct {
+				Type string `json:"type"`
+			}
+			var msg message
+			err = json.NewDecoder(bytes.NewReader(line)).Decode(&msg)
+			switch msg.Type {
+			case "HEARTBEAT":
+				continue
+			default:
+				var transaction Transaction
+				err = json.NewDecoder(bytes.NewReader(line)).Decode(&transaction)
+				if err != nil {
+					continue
+				}
+				transactions <- transaction
+			}
+		}
+	}()
+
+	return transactions, nil
 }
 
 // GetAccountLatestCandles get dancing bears and most recently completed candles within an Account for specified
@@ -924,4 +965,48 @@ func (c *Client) GetAccountInstrumentCandles(accountId string, instrument string
 		return nil, err
 	}
 	return &getAccountInstrumentCandlesResponse, nil
+}
+
+func (c *Client) GetAccountPricingStream(accountId string, request GetAccountPricingStreamRequest) (<-chan ClientPrice, error) {
+	urlQuery, err := query.Values(request)
+	if err != nil {
+		return nil, err
+	}
+	req, err := http.NewRequest(http.MethodGet, fmt.Sprintf("%s/v3/accounts/%s/pricing/stream?%s", c.baseUrl, accountId, urlQuery), nil)
+	if err != nil {
+		return nil, err
+	}
+	c.setHeaders(req)
+	resp, err := c.conn.Do(req)
+	if err != nil {
+		return nil, err
+	}
+	if resp.StatusCode != http.StatusOK {
+		return nil, fmt.Errorf("received an HTTP %d response", resp.StatusCode)
+	}
+	prices := make(chan ClientPrice)
+	go func() {
+		reader := bufio.NewReader(resp.Body)
+		for {
+			line, err := reader.ReadBytes('\n')
+			type message struct {
+				Type string `json:"type"`
+			}
+			var msg message
+			err = json.NewDecoder(bytes.NewReader(line)).Decode(&msg)
+			switch msg.Type {
+			case "HEARTBEAT":
+				continue
+			case "PRICE":
+				var price ClientPrice
+				err = json.NewDecoder(bytes.NewReader(line)).Decode(&price)
+				if err != nil {
+					continue
+				}
+				prices <- price
+			}
+		}
+	}()
+
+	return prices, nil
 }

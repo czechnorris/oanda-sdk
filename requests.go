@@ -56,7 +56,7 @@ type GetInstrumentCandlesRequest struct {
 
 type GetAccountOrdersRequest struct {
 	// List of Order IDs to retrieve
-	IDs []OrderID `url:"ids,comma"`
+	IDs []OrderID `url:"ids,comma,omitempty"`
 
 	// The state to filter the requested Orders by
 	// Default: PENDING
@@ -86,7 +86,7 @@ type UpdateClientExtensionsRequest struct {
 
 type GetAccountTradesRequest struct {
 	// List of Trade IDs to retrieve.
-	IDs []TradeID `url:"ids,comma"`
+	IDs []TradeID `url:"ids,comma,omitempty"`
 
 	// The state to filter the requested Trades by.
 	// Ddefault: OPEN
@@ -176,7 +176,7 @@ type GetAccountTransactionsRequest struct {
 	PageSize *int `url:"pageSize,omitempty"`
 
 	// A filter for restricting the types of Transactions to retrieve.
-	Type []TransactionFilter `url:"type,comma"`
+	Type []TransactionFilter `url:"type,comma,omitempty"`
 }
 
 type GetAccountTransactionsByIdRangeRequest struct {
@@ -204,7 +204,7 @@ type GetAccountLatestCandlesRequest struct {
 
 	// The number of units used to calculate the volume-weighted average bid and ask prices in the returned candles.
 	// Default: 1
-	Units *decimal.Decimal `url:"decimal,omitempty"`
+	Units *float64 `url:"decimal,omitempty"`
 
 	// A flag that controls whether the candlestick is “smoothed” or not. A smoothed candlestick uses the previous
 	// candle’s close price as its open price, while an unsmoothed candlestick uses the first price from its time range
@@ -268,7 +268,7 @@ type GetAccountInstrumentCandlesRequest struct {
 	// candle’s close price as its open price, while an unsmoothed candlestick uses the first price from its time range
 	// as its open price.
 	// Default: False
-	Smooth *bool `url:"smoot,omitempty"`
+	Smooth *bool `url:"smooth,omitempty"`
 
 	// A flag that controls whether the candlestick that is covered by the From time should be included in the results.
 	// This flag enables clients to use the timestamp of the last completed candlestick received to poll for future
@@ -293,5 +293,19 @@ type GetAccountInstrumentCandlesRequest struct {
 
 	// The number of units used to calculate the volume-weighted average bid and ask prices in the returned candles.
 	// Default: 1
-	Units *decimal.Decimal `url:"units,omitempty"`
+	Units *float64 `url:"units,omitempty"`
+}
+
+type GetAccountPricingStreamRequest struct {
+	// List of Instruments to stream Prices for.
+	Instruments []string `url:"instruments,comma"`
+
+	// Flag that enables/disables the sending of a pricing snapshot when initially connecting to the stream.
+	// Default: True
+	Snapshot *bool `url:"snapshot,omitempty"`
+
+	// Flag that enables the inclusion of the homeConversions field in the returned response. An entry will be returned
+	// for each currency in the set of all base and quote currencies present in the requested instruments list.
+	// Default: False
+	IncludeHomeConversion *bool `url:"includeHomeConversion,omitempty"`
 }
