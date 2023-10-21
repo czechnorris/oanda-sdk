@@ -7,6 +7,7 @@ import (
 	"fmt"
 	"github.com/google/go-querystring/query"
 	"net/http"
+	"time"
 )
 
 type Client struct {
@@ -58,7 +59,7 @@ func (c *Client) GetAccounts() (*GetAccountsResponse, error) {
 
 // GetAccount gets the full details for a single Account that a client has access to. Full pending Order, open Trade
 // and open Position representations are provided.
-func (c *Client) GetAccount(accountID string) (*GetAccountResponse, error) {
+func (c *Client) GetAccount(accountID AccountID) (*GetAccountResponse, error) {
 	req, err := http.NewRequest(http.MethodGet, fmt.Sprintf("%s/v3/accounts/%s", c.baseUrl, accountID), nil)
 	if err != nil {
 		return nil, err
@@ -80,7 +81,7 @@ func (c *Client) GetAccount(accountID string) (*GetAccountResponse, error) {
 }
 
 // GetAccountSummary gets a summary for a single Account that a client has access to.
-func (c *Client) GetAccountSummary(accountID string) (*GetAccountSummaryResponse, error) {
+func (c *Client) GetAccountSummary(accountID AccountID) (*GetAccountSummaryResponse, error) {
 	req, err := http.NewRequest(http.MethodGet, fmt.Sprintf("%s/v3/accounts/%s/summary", c.baseUrl, accountID), nil)
 	if err != nil {
 		return nil, err
@@ -104,8 +105,16 @@ func (c *Client) GetAccountSummary(accountID string) (*GetAccountSummaryResponse
 // GetAccountInstruments gets the list of tradeable instruments for the given Account. The list of tradeable instruments
 // is dependent on the regulatory division that the Account is located in, thus should be the same for all Accounts
 // owned by a single user.
-func (c *Client) GetAccountInstruments(accountID, instruments string) (*GetAccountInstrumentsResponse, error) {
-	req, err := http.NewRequest(http.MethodGet, fmt.Sprintf("%s/v3/accounts/%s/instruments?instruments=%s", c.baseUrl, accountID, instruments), nil)
+func (c *Client) GetAccountInstruments(accountID AccountID, instruments []string) (*GetAccountInstrumentsResponse, error) {
+	urlQuery, err := query.Values(struct {
+		Instruments []string `url:"instruments,comma,omitempty"`
+	}{
+		Instruments: instruments,
+	})
+	if err != nil {
+		return nil, err
+	}
+	req, err := http.NewRequest(http.MethodGet, fmt.Sprintf("%s/v3/accounts/%s/instruments?%s", c.baseUrl, accountID, urlQuery.Encode()), nil)
 	if err != nil {
 		return nil, err
 	}
@@ -126,7 +135,7 @@ func (c *Client) GetAccountInstruments(accountID, instruments string) (*GetAccou
 }
 
 // SetAccountConfiguration sets the client-configurable portions of the Account.
-func (c *Client) SetAccountConfiguration(accountID string, requestBody SetAccountConfigurationRequest) (*SetAccountConfigurationResponse, error) {
+func (c *Client) SetAccountConfiguration(accountID AccountID, requestBody SetAccountConfigurationRequest) (*SetAccountConfigurationResponse, error) {
 	buffer := bytes.Buffer{}
 	err := json.NewEncoder(&buffer).Encode(requestBody)
 	if err != nil {
@@ -161,8 +170,16 @@ func (c *Client) SetAccountConfiguration(accountID string, requestBody SetAccoun
 }
 
 // GetAccountChanges is used to poll an Account for its current state and changes since a specified TransactionID
-func (c *Client) GetAccountChanges(accountID string, sinceTransactionID TransactionID) (*GetAccountChangesResponse, error) {
-	req, err := http.NewRequest(http.MethodGet, fmt.Sprintf("%s/v3/accounts/%s/changes?sinceTransactionID=%s", c.baseUrl, accountID, sinceTransactionID), nil)
+func (c *Client) GetAccountChanges(accountID AccountID, sinceTransactionID TransactionID) (*GetAccountChangesResponse, error) {
+	urlQuery, err := query.Values(struct {
+		SinceTransactionID TransactionID `url:"sinceTransactionID"`
+	}{
+		SinceTransactionID: sinceTransactionID,
+	})
+	if err != nil {
+		return nil, err
+	}
+	req, err := http.NewRequest(http.MethodGet, fmt.Sprintf("%s/v3/accounts/%s/changes?%s", c.baseUrl, accountID, urlQuery), nil)
 	if err != nil {
 		return nil, err
 	}
@@ -209,12 +226,16 @@ func (c *Client) GetInstrumentCandles(instrument string, request GetInstrumentCa
 }
 
 // GetInstrumentOrderBook fetches an order book for an instrument
-func (c *Client) GetInstrumentOrderBook(instrument string, time *string) (*GetInstrumentOrderBookResponse, error) {
-	queryString := ""
-	if time != nil {
-		queryString = "time=" + *time
+func (c *Client) GetInstrumentOrderBook(instrument string, snapshotTime *time.Time) (*GetInstrumentOrderBookResponse, error) {
+	urlQuery, err := query.Values(struct {
+		Time *time.Time `url:"time,omitempty"`
+	}{
+		Time: snapshotTime,
+	})
+	if err != nil {
+		return nil, err
 	}
-	req, err := http.NewRequest(http.MethodGet, fmt.Sprintf("%s/v3/instruments/%s/orderBook?%s", c.baseUrl, instrument, queryString), nil)
+	req, err := http.NewRequest(http.MethodGet, fmt.Sprintf("%s/v3/instruments/%s/orderBook?%s", c.baseUrl, instrument, urlQuery), nil)
 	if err != nil {
 		return nil, err
 	}
@@ -235,12 +256,16 @@ func (c *Client) GetInstrumentOrderBook(instrument string, time *string) (*GetIn
 }
 
 // GetInstrumentPositionBook fetches a position book for an instrument
-func (c *Client) GetInstrumentPositionBook(instrument string, time *string) (*GetInstrumentPositionBookResponse, error) {
-	queryString := ""
-	if time != nil {
-		queryString = "time=" + *time
+func (c *Client) GetInstrumentPositionBook(instrument string, snapshotTime *time.Time) (*GetInstrumentPositionBookResponse, error) {
+	urlQuery, err := query.Values(struct {
+		Time *time.Time `url:"time,omitempty"`
+	}{
+		Time: snapshotTime,
+	})
+	if err != nil {
+		return nil, err
 	}
-	req, err := http.NewRequest(http.MethodGet, fmt.Sprintf("%s/v3/instruments/%s/positionBook?%s", c.baseUrl, instrument, queryString), nil)
+	req, err := http.NewRequest(http.MethodGet, fmt.Sprintf("%s/v3/instruments/%s/positionBook?%s", c.baseUrl, instrument, urlQuery), nil)
 	if err != nil {
 		return nil, err
 	}
@@ -261,7 +286,7 @@ func (c *Client) GetInstrumentPositionBook(instrument string, time *string) (*Ge
 }
 
 // CreateOrder creates an Order for an Account
-func (c *Client) CreateOrder(accountID string, orderRequest OrderRequest) (*CreateOrderResponse, error) {
+func (c *Client) CreateOrder(accountID AccountID, orderRequest OrderRequest) (*CreateOrderResponse, error) {
 	var buf bytes.Buffer
 	err := json.NewEncoder(&buf).Encode(orderRequest)
 	if err != nil {
@@ -296,7 +321,7 @@ func (c *Client) CreateOrder(accountID string, orderRequest OrderRequest) (*Crea
 }
 
 // GetAccountOrders gets a list of Orders for an Account
-func (c *Client) GetAccountOrders(accountID string, request GetAccountOrdersRequest) (*GetAccountOrdersResponse, error) {
+func (c *Client) GetAccountOrders(accountID AccountID, request GetAccountOrdersRequest) (*GetAccountOrdersResponse, error) {
 	urlQuery, err := query.Values(request)
 	if err != nil {
 		return nil, err
@@ -322,7 +347,7 @@ func (c *Client) GetAccountOrders(accountID string, request GetAccountOrdersRequ
 }
 
 // GetAccountPendingOrders lists all pending Orders in an Account
-func (c *Client) GetAccountPendingOrders(accountID string) (*GetAccountOrdersResponse, error) {
+func (c *Client) GetAccountPendingOrders(accountID AccountID) (*GetAccountOrdersResponse, error) {
 	req, err := http.NewRequest(http.MethodGet, fmt.Sprintf("%s/accounts/%s/pendingOrders", c.baseUrl, accountID), nil)
 	if err != nil {
 		return nil, err
@@ -344,7 +369,7 @@ func (c *Client) GetAccountPendingOrders(accountID string) (*GetAccountOrdersRes
 }
 
 // GetAccountOrder gets details for a single Order in an Account
-func (c *Client) GetAccountOrder(accountID string, orderSpecifier OrderSpecifier) (*GetAccountOrderResponse, error) {
+func (c *Client) GetAccountOrder(accountID AccountID, orderSpecifier OrderSpecifier) (*GetAccountOrderResponse, error) {
 	req, err := http.NewRequest(http.MethodGet, fmt.Sprintf("%s/accounts/%s/orders/%s", c.baseUrl, accountID, orderSpecifier), nil)
 	if err != nil {
 		return nil, err
@@ -366,7 +391,7 @@ func (c *Client) GetAccountOrder(accountID string, orderSpecifier OrderSpecifier
 }
 
 // ReplaceAccountOrder replaces an Order in an Account by simultaneously cancelling it and creating a replacement Order
-func (c *Client) ReplaceAccountOrder(accountID string, orderSpecifier OrderSpecifier, orderRequest OrderRequest) (*ReplaceAccountOrderResponse, error) {
+func (c *Client) ReplaceAccountOrder(accountID AccountID, orderSpecifier OrderSpecifier, orderRequest OrderRequest) (*ReplaceAccountOrderResponse, error) {
 	var buf bytes.Buffer
 	err := json.NewEncoder(&buf).Encode(orderRequest)
 	if err != nil {
@@ -408,7 +433,7 @@ func (c *Client) ReplaceAccountOrder(accountID string, orderSpecifier OrderSpeci
 }
 
 // CancelAccountOrder cancels a pending Order in an Account
-func (c *Client) CancelAccountOrder(accountID string, orderSpecifier OrderSpecifier) (*CancelAccountOrderResponse, error) {
+func (c *Client) CancelAccountOrder(accountID AccountID, orderSpecifier OrderSpecifier) (*CancelAccountOrderResponse, error) {
 	req, err := http.NewRequest(http.MethodPut, fmt.Sprintf("%s/v3/accounts/%s/orders/%s/cancel", c.baseUrl, accountID, orderSpecifier), nil)
 	if err != nil {
 		return nil, err
@@ -472,7 +497,7 @@ func (c *Client) UpdateAccountOrderClientExtensions(accountID AccountID, orderSp
 }
 
 // GetAccountTrades gets a list of Trades for an Account
-func (c *Client) GetAccountTrades(accountID string, request GetAccountTradesRequest) (*GetAccountTradesResponse, error) {
+func (c *Client) GetAccountTrades(accountID AccountID, request GetAccountTradesRequest) (*GetAccountTradesResponse, error) {
 	urlQuery, err := query.Values(request)
 	if err != nil {
 		return nil, err
@@ -498,8 +523,8 @@ func (c *Client) GetAccountTrades(accountID string, request GetAccountTradesRequ
 }
 
 // GetAccountOpenTrades gets the list of open Trades for an Account
-func (c *Client) GetAccountOpenTrades(accountId string) (*GetAccountTradesResponse, error) {
-	req, err := http.NewRequest(http.MethodGet, fmt.Sprintf("%s/v3/accounts/%s/openTrades", c.baseUrl, accountId), nil)
+func (c *Client) GetAccountOpenTrades(accountID AccountID) (*GetAccountTradesResponse, error) {
+	req, err := http.NewRequest(http.MethodGet, fmt.Sprintf("%s/v3/accounts/%s/openTrades", c.baseUrl, accountID), nil)
 	if err != nil {
 		return nil, err
 	}
@@ -520,8 +545,8 @@ func (c *Client) GetAccountOpenTrades(accountId string) (*GetAccountTradesRespon
 }
 
 // GetAccountTrade gets the details of a specific Trade in an Account
-func (c *Client) GetAccountTrade(accountId string, tradeSpecifier string) (*GetAccountTradeResponse, error) {
-	req, err := http.NewRequest(http.MethodGet, fmt.Sprintf("%s/v3/accounts/%s/trades/%s", c.baseUrl, accountId, tradeSpecifier), nil)
+func (c *Client) GetAccountTrade(accountID AccountID, tradeSpecifier TradeSpecifier) (*GetAccountTradeResponse, error) {
+	req, err := http.NewRequest(http.MethodGet, fmt.Sprintf("%s/v3/accounts/%s/trades/%s", c.baseUrl, accountID, tradeSpecifier), nil)
 	if err != nil {
 		return nil, err
 	}
@@ -542,8 +567,8 @@ func (c *Client) GetAccountTrade(accountId string, tradeSpecifier string) (*GetA
 }
 
 // CloseAccountTrade closes (partially or fully) a specific open Trade in an Account
-func (c *Client) CloseAccountTrade(accountId string, tradeSpecifier string) (*CloseAccountTradeResponse, error) {
-	req, err := http.NewRequest(http.MethodPut, fmt.Sprintf("%s/v3/accounts/%s/trades/%s/close", c.baseUrl, accountId, tradeSpecifier), nil)
+func (c *Client) CloseAccountTrade(accountID AccountID, tradeSpecifier TradeSpecifier) (*CloseAccountTradeResponse, error) {
+	req, err := http.NewRequest(http.MethodPut, fmt.Sprintf("%s/v3/accounts/%s/trades/%s/close", c.baseUrl, accountID, tradeSpecifier), nil)
 	if err != nil {
 		return nil, err
 	}
@@ -575,7 +600,7 @@ func (c *Client) CloseAccountTrade(accountId string, tradeSpecifier string) (*Cl
 
 // UpdateAccountTradeClientExtensions updates the ClientExtensions for a Trade. Do not add, update or delete the
 // ClientExtensions if your account is associated with MT4.
-func (c *Client) UpdateAccountTradeClientExtensions(accountID string, tradeSpecifier string) (*UpdateAccountTradeResponse, error) {
+func (c *Client) UpdateAccountTradeClientExtensions(accountID AccountID, tradeSpecifier TradeSpecifier) (*UpdateAccountTradeResponse, error) {
 	req, err := http.NewRequest(http.MethodPut, fmt.Sprintf("%s/v3/accounts/%s/trades/%s/clientExtensions", c.baseUrl, accountID, tradeSpecifier), nil)
 	if err != nil {
 		return nil, err
@@ -608,13 +633,13 @@ func (c *Client) UpdateAccountTradeClientExtensions(accountID string, tradeSpeci
 
 // UpdateAccountTradeOrders creates, replaces and cancels a Trade's dependent Orders (TakeProfit, StopLoss and
 // TrailingStopLoss) through the Trade itself
-func (c *Client) UpdateAccountTradeOrders(accountId string, tradeSpecifier string, updateAccountTradeOrdersRequest UpdateAccountTradeOrdersRequest) (*UpdateAccountTradeOrdersResponse, error) {
+func (c *Client) UpdateAccountTradeOrders(accountID AccountID, tradeSpecifier TradeSpecifier, updateAccountTradeOrdersRequest UpdateAccountTradeOrdersRequest) (*UpdateAccountTradeOrdersResponse, error) {
 	var buf bytes.Buffer
 	err := json.NewEncoder(&buf).Encode(updateAccountTradeOrdersRequest)
 	if err != nil {
 		return nil, err
 	}
-	req, err := http.NewRequest(http.MethodPut, fmt.Sprintf("%s/v3/accounts/%s/trades/%s/orders", c.baseUrl, accountId, tradeSpecifier), &buf)
+	req, err := http.NewRequest(http.MethodPut, fmt.Sprintf("%s/v3/accounts/%s/trades/%s/orders", c.baseUrl, accountID, tradeSpecifier), &buf)
 	if err != nil {
 		return nil, err
 	}
@@ -644,8 +669,8 @@ func (c *Client) UpdateAccountTradeOrders(accountId string, tradeSpecifier strin
 
 // GetAccountPositions lists all Positions for an Account. The Positions returned are for every instrument that has had
 // a position during the lifetime of the Account.
-func (c *Client) GetAccountPositions(accountId string) (*GetAccountPositionsResponse, error) {
-	req, err := http.NewRequest(http.MethodGet, fmt.Sprintf("%s/v3/accounts/%s/positions", c.baseUrl, accountId), nil)
+func (c *Client) GetAccountPositions(accountID AccountID) (*GetAccountPositionsResponse, error) {
+	req, err := http.NewRequest(http.MethodGet, fmt.Sprintf("%s/v3/accounts/%s/positions", c.baseUrl, accountID), nil)
 	if err != nil {
 		return nil, err
 	}
@@ -667,8 +692,8 @@ func (c *Client) GetAccountPositions(accountId string) (*GetAccountPositionsResp
 
 // GetAccountOpenPositions lists all open Positions for an Account. An open Position is a Position in an Account that
 // currently has a Trade opened for it.
-func (c *Client) GetAccountOpenPositions(accountId string) (*GetAccountPositionsResponse, error) {
-	req, err := http.NewRequest(http.MethodGet, fmt.Sprintf("%s/v3/accounts/%s/openPositions", c.baseUrl, accountId), nil)
+func (c *Client) GetAccountOpenPositions(accountID AccountID) (*GetAccountPositionsResponse, error) {
+	req, err := http.NewRequest(http.MethodGet, fmt.Sprintf("%s/v3/accounts/%s/openPositions", c.baseUrl, accountID), nil)
 	if err != nil {
 		return nil, err
 	}
@@ -690,8 +715,8 @@ func (c *Client) GetAccountOpenPositions(accountId string) (*GetAccountPositions
 
 // GetAccountInstrumentPosition gets the details of a single Instrument's Position in an Account. The Position may be
 // open or not.
-func (c *Client) GetAccountInstrumentPosition(accountId string, instrument string) (*GetAccountInstrumentPositionResponse, error) {
-	req, err := http.NewRequest(http.MethodGet, fmt.Sprintf("%s/v3/accounts/%s/positions/%s", c.baseUrl, accountId, instrument), nil)
+func (c *Client) GetAccountInstrumentPosition(accountID AccountID, instrument string) (*GetAccountInstrumentPositionResponse, error) {
+	req, err := http.NewRequest(http.MethodGet, fmt.Sprintf("%s/v3/accounts/%s/positions/%s", c.baseUrl, accountID, instrument), nil)
 	if err != nil {
 		return nil, err
 	}
@@ -712,13 +737,13 @@ func (c *Client) GetAccountInstrumentPosition(accountId string, instrument strin
 }
 
 // CloseAccountInstrumentPosition closeouts the opan Position for a specific Instrument in an Account.
-func (c *Client) CloseAccountInstrumentPosition(accountId string, instrument string, request CloseAccountInstrumentPositionRequest) (*CloseAccountInstrumentPositionResponse, error) {
+func (c *Client) CloseAccountInstrumentPosition(accountID AccountID, instrument string, request CloseAccountInstrumentPositionRequest) (*CloseAccountInstrumentPositionResponse, error) {
 	var buf bytes.Buffer
 	err := json.NewEncoder(&buf).Encode(request)
 	if err != nil {
 		return nil, err
 	}
-	req, err := http.NewRequest(http.MethodPut, fmt.Sprintf("%s/v3/accounts/%s/positions/%s/close", c.baseUrl, accountId, instrument), &buf)
+	req, err := http.NewRequest(http.MethodPut, fmt.Sprintf("%s/v3/accounts/%s/positions/%s/close", c.baseUrl, accountID, instrument), &buf)
 	if err != nil {
 		return nil, err
 	}
@@ -749,12 +774,12 @@ func (c *Client) CloseAccountInstrumentPosition(accountId string, instrument str
 }
 
 // GetAccountTransactions gets a list of Transaction pages that satisfy a time-based Transaction query.
-func (c *Client) GetAccountTransactions(accountId string, request GetAccountTransactionsRequest) (*GetAccountTransactionsResponse, error) {
+func (c *Client) GetAccountTransactions(accountID AccountID, request GetAccountTransactionsRequest) (*GetAccountTransactionsResponse, error) {
 	urlQuery, err := query.Values(request)
 	if err != nil {
 		return nil, err
 	}
-	req, err := http.NewRequest(http.MethodGet, fmt.Sprintf("%s/v3/accounts/%s/transactions?%s", c.baseUrl, accountId, urlQuery), nil)
+	req, err := http.NewRequest(http.MethodGet, fmt.Sprintf("%s/v3/accounts/%s/transactions?%s", c.baseUrl, accountID, urlQuery), nil)
 	if err != nil {
 		return nil, err
 	}
@@ -775,8 +800,8 @@ func (c *Client) GetAccountTransactions(accountId string, request GetAccountTran
 }
 
 // GetAccountTransaction gets the details of a single Account Transaction
-func (c *Client) GetAccountTransaction(accountId string, transactionId string) (*GetAccountTransactionResponse, error) {
-	req, err := http.NewRequest(http.MethodGet, fmt.Sprintf("%s/v3/accounts/%s/transactions/%s", c.baseUrl, accountId, transactionId), nil)
+func (c *Client) GetAccountTransaction(accountID AccountID, transactionID TransactionID) (*GetAccountTransactionResponse, error) {
+	req, err := http.NewRequest(http.MethodGet, fmt.Sprintf("%s/v3/accounts/%s/transactions/%s", c.baseUrl, accountID, transactionID), nil)
 	if err != nil {
 		return nil, err
 	}
@@ -797,12 +822,12 @@ func (c *Client) GetAccountTransaction(accountId string, transactionId string) (
 }
 
 // GetAccountTransactionsByIdRange gets a range of Transactions for an Account based on the TransactionIDs.
-func (c *Client) GetAccountTransactionsByIdRange(accountId string, request GetAccountTransactionsByIdRangeRequest) (*GetAccountTransactionsRangeResponse, error) {
+func (c *Client) GetAccountTransactionsByIdRange(accountID AccountID, request GetAccountTransactionsByIdRangeRequest) (*GetAccountTransactionsRangeResponse, error) {
 	urlQuery, err := query.Values(request)
 	if err != nil {
 		return nil, err
 	}
-	req, err := http.NewRequest(http.MethodGet, fmt.Sprintf("%s/v3/accounts/%s/transactions/idrange?%s", c.baseUrl, accountId, urlQuery), nil)
+	req, err := http.NewRequest(http.MethodGet, fmt.Sprintf("%s/v3/accounts/%s/transactions/idrange?%s", c.baseUrl, accountID, urlQuery), nil)
 	if err != nil {
 		return nil, err
 	}
@@ -823,12 +848,12 @@ func (c *Client) GetAccountTransactionsByIdRange(accountId string, request GetAc
 }
 
 // GetAccountTransactionsSinceId gets a range of Transactions for an Account starting at a provided TransactionID
-func (c *Client) GetAccountTransactionsSinceId(accountId string, request GetAccountTransactionsSinceIdRequest) (*GetAccountTransactionsRangeResponse, error) {
+func (c *Client) GetAccountTransactionsSinceId(accountID AccountID, request GetAccountTransactionsSinceIdRequest) (*GetAccountTransactionsRangeResponse, error) {
 	urlQuery, err := query.Values(request)
 	if err != nil {
 		return nil, err
 	}
-	req, err := http.NewRequest(http.MethodGet, fmt.Sprintf("%s/v3/accounts/%s/transactions/idrange?%s", c.baseUrl, accountId, urlQuery), nil)
+	req, err := http.NewRequest(http.MethodGet, fmt.Sprintf("%s/v3/accounts/%s/transactions/idrange?%s", c.baseUrl, accountID, urlQuery), nil)
 	if err != nil {
 		return nil, err
 	}
@@ -848,8 +873,8 @@ func (c *Client) GetAccountTransactionsSinceId(accountId string, request GetAcco
 	return &getAccountTransactionsResponse, nil
 }
 
-func (c *Client) GetAccountTransactionsStream(accountId string) (<-chan Transaction, error) {
-	req, err := http.NewRequest(http.MethodGet, fmt.Sprintf("%s/v3/accounts/%s/transactions/stream", c.baseUrl, accountId), nil)
+func (c *Client) GetAccountTransactionsStream(accountID AccountID) (<-chan Transaction, error) {
+	req, err := http.NewRequest(http.MethodGet, fmt.Sprintf("%s/v3/accounts/%s/transactions/stream", c.baseUrl, accountID), nil)
 	if err != nil {
 		return nil, err
 	}
@@ -890,12 +915,12 @@ func (c *Client) GetAccountTransactionsStream(accountId string) (<-chan Transact
 
 // GetAccountLatestCandles get dancing bears and most recently completed candles within an Account for specified
 // combinations of instrument, granularity and price component.
-func (c *Client) GetAccountLatestCandles(accountId string, request GetAccountLatestCandlesRequest) (*GetAccountLatestCandlesResponse, error) {
+func (c *Client) GetAccountLatestCandles(accountID AccountID, request GetAccountLatestCandlesRequest) (*GetAccountLatestCandlesResponse, error) {
 	urlQuery, err := query.Values(request)
 	if err != nil {
 		return nil, err
 	}
-	req, err := http.NewRequest(http.MethodGet, fmt.Sprintf("%s/v3/accounts/%s/candles/latest?%s", c.baseUrl, accountId, urlQuery), nil)
+	req, err := http.NewRequest(http.MethodGet, fmt.Sprintf("%s/v3/accounts/%s/candles/latest?%s", c.baseUrl, accountID, urlQuery), nil)
 	if err != nil {
 		return nil, err
 	}
@@ -916,12 +941,12 @@ func (c *Client) GetAccountLatestCandles(accountId string, request GetAccountLat
 }
 
 // GetAccountPricing gets pricing information for a specified list of Instruments within an Account
-func (c *Client) GetAccountPricing(accountId string, request GetAccountPricingRequest) (*GetAccountPricingResponse, error) {
+func (c *Client) GetAccountPricing(accountID AccountID, request GetAccountPricingRequest) (*GetAccountPricingResponse, error) {
 	urlQuery, err := query.Values(request)
 	if err != nil {
 		return nil, err
 	}
-	req, err := http.NewRequest(http.MethodGet, fmt.Sprintf("%s/v3/accounts/%s/pricing?%s", c.baseUrl, accountId, urlQuery), nil)
+	req, err := http.NewRequest(http.MethodGet, fmt.Sprintf("%s/v3/accounts/%s/pricing?%s", c.baseUrl, accountID, urlQuery), nil)
 	if err != nil {
 		return nil, err
 	}
@@ -942,12 +967,12 @@ func (c *Client) GetAccountPricing(accountId string, request GetAccountPricingRe
 }
 
 // GetAccountInstrumentCandles fetches candlestick data for an Instrument
-func (c *Client) GetAccountInstrumentCandles(accountId string, instrument string, request GetAccountInstrumentCandlesRequest) (*GetAccountInstrumentCandlesResponse, error) {
+func (c *Client) GetAccountInstrumentCandles(accountID AccountID, instrument string, request GetAccountInstrumentCandlesRequest) (*GetAccountInstrumentCandlesResponse, error) {
 	urlQuery, err := query.Values(request)
 	if err != nil {
 		return nil, err
 	}
-	req, err := http.NewRequest(http.MethodGet, fmt.Sprintf("%s/v3/accounts/%s/instruments/%s/candles?%s", c.baseUrl, accountId, instrument, urlQuery), nil)
+	req, err := http.NewRequest(http.MethodGet, fmt.Sprintf("%s/v3/accounts/%s/instruments/%s/candles?%s", c.baseUrl, accountID, instrument, urlQuery), nil)
 	if err != nil {
 		return nil, err
 	}
@@ -967,12 +992,12 @@ func (c *Client) GetAccountInstrumentCandles(accountId string, instrument string
 	return &getAccountInstrumentCandlesResponse, nil
 }
 
-func (c *Client) GetAccountPricingStream(accountId string, request GetAccountPricingStreamRequest) (<-chan ClientPrice, error) {
+func (c *Client) GetAccountPricingStream(accountID AccountID, request GetAccountPricingStreamRequest) (<-chan ClientPrice, error) {
 	urlQuery, err := query.Values(request)
 	if err != nil {
 		return nil, err
 	}
-	req, err := http.NewRequest(http.MethodGet, fmt.Sprintf("%s/v3/accounts/%s/pricing/stream?%s", c.baseUrl, accountId, urlQuery), nil)
+	req, err := http.NewRequest(http.MethodGet, fmt.Sprintf("%s/v3/accounts/%s/pricing/stream?%s", c.baseUrl, accountID, urlQuery), nil)
 	if err != nil {
 		return nil, err
 	}
