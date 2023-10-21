@@ -1,4 +1,4 @@
-module oanda-sdk
+module github.com/czechnorris/oanda-sdk
 
 go 1.21
 
