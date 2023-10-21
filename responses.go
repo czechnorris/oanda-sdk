@@ -515,3 +515,31 @@ type GetAccountTransactionsRangeResponse struct {
 	// The ID of the most recent Transaction created for the Account
 	LastTransactionID TransactionID `json:"lastTransactionID"`
 }
+
+type GetAccountLatestCandlesResponse struct {
+	// The latest candle sticks.
+	LatestCandles []CandlestickResponse `json:"latestCandles"`
+}
+
+type GetAccountPricingResponse struct {
+	// The list of Price objects requested.
+	Prices []ClientPrice `json:"prices"`
+
+	// The list of home currency conversion factors requested. This field will only be present if includeHomeConversions
+	// was set to true in the request.
+	HomeConversions []HomeConversions `json:"homeConversions"`
+
+	// The DateTime value to use for the “since” parameter in the next poll request.
+	Time time.Time `json:"time"`
+}
+
+type GetAccountInstrumentCandlesResponse struct {
+	// The instrument whose Prices are represented by the candlesticks.
+	Instrument string `json:"instrument"`
+
+	// The granularity of the candlesticks provided.
+	Granularity CandlestickGranularity `json:"granularity"`
+
+	// The list of candlesticks that satisfy the request.
+	Candles []Candlestick `json:"candles"`
+}

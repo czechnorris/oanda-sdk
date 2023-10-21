@@ -827,7 +827,7 @@ func (c *Client) GetAccountTransactionsSinceId(accountId string, request GetAcco
 	if err != nil {
 		return nil, err
 	}
-	req, err := http.NewRequest(http.MethodGet, fmt.Sprintf("%s/v3/accounts/%s/transactions/idrange?", c.baseUrl, accountId, urlQuery), nil)
+	req, err := http.NewRequest(http.MethodGet, fmt.Sprintf("%s/v3/accounts/%s/transactions/idrange?%s", c.baseUrl, accountId, urlQuery), nil)
 	if err != nil {
 		return nil, err
 	}
@@ -845,4 +845,83 @@ func (c *Client) GetAccountTransactionsSinceId(accountId string, request GetAcco
 		return nil, err
 	}
 	return &getAccountTransactionsResponse, nil
+}
+
+// GetAccountLatestCandles get dancing bears and most recently completed candles within an Account for specified
+// combinations of instrument, granularity and price component.
+func (c *Client) GetAccountLatestCandles(accountId string, request GetAccountLatestCandlesRequest) (*GetAccountLatestCandlesResponse, error) {
+	urlQuery, err := query.Values(request)
+	if err != nil {
+		return nil, err
+	}
+	req, err := http.NewRequest(http.MethodGet, fmt.Sprintf("%s/v3/accounts/%s/candles/latest?%s", c.baseUrl, accountId, urlQuery), nil)
+	if err != nil {
+		return nil, err
+	}
+	c.setHeaders(req)
+	resp, err := c.conn.Do(req)
+	if err != nil {
+		return nil, err
+	}
+	if resp.StatusCode != http.StatusOK {
+		return nil, fmt.Errorf("received an HTTP %d response", resp.StatusCode)
+	}
+	var getAccountLatestCandlesResponse GetAccountLatestCandlesResponse
+	err = json.NewDecoder(resp.Body).Decode(&getAccountLatestCandlesResponse)
+	if err != nil {
+		return nil, err
+	}
+	return &getAccountLatestCandlesResponse, nil
+}
+
+// GetAccountPricing gets pricing information for a specified list of Instruments within an Account
+func (c *Client) GetAccountPricing(accountId string, request GetAccountPricingRequest) (*GetAccountPricingResponse, error) {
+	urlQuery, err := query.Values(request)
+	if err != nil {
+		return nil, err
+	}
+	req, err := http.NewRequest(http.MethodGet, fmt.Sprintf("%s/v3/accounts/%s/pricing?%s", c.baseUrl, accountId, urlQuery), nil)
+	if err != nil {
+		return nil, err
+	}
+	c.setHeaders(req)
+	resp, err := c.conn.Do(req)
+	if err != nil {
+		return nil, err
+	}
+	if resp.StatusCode != http.StatusOK {
+		return nil, fmt.Errorf("received an HTTP %d response", resp.StatusCode)
+	}
+	var getAccountPricingResponse GetAccountPricingResponse
+	err = json.NewDecoder(resp.Body).Decode(&getAccountPricingResponse)
+	if err != nil {
+		return nil, err
+	}
+	return &getAccountPricingResponse, nil
+}
+
+// GetAccountInstrumentCandles fetches candlestick data for an Instrument
+func (c *Client) GetAccountInstrumentCandles(accountId string, instrument string, request GetAccountInstrumentCandlesRequest) (*GetAccountInstrumentCandlesResponse, error) {
+	urlQuery, err := query.Values(request)
+	if err != nil {
+		return nil, err
+	}
+	req, err := http.NewRequest(http.MethodGet, fmt.Sprintf("%s/v3/accounts/%s/instruments/%s/candles?%s", c.baseUrl, accountId, instrument, urlQuery), nil)
+	if err != nil {
+		return nil, err
+	}
+	c.setHeaders(req)
+	resp, err := c.conn.Do(req)
+	if err != nil {
+		return nil, err
+	}
+	if resp.StatusCode != http.StatusOK {
+		return nil, fmt.Errorf("received an HTTP %d response", resp.StatusCode)
+	}
+	var getAccountInstrumentCandlesResponse GetAccountInstrumentCandlesResponse
+	err = json.NewDecoder(resp.Body).Decode(&getAccountInstrumentCandlesResponse)
+	if err != nil {
+		return nil, err
+	}
+	return &getAccountInstrumentCandlesResponse, nil
 }
