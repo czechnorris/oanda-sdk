@@ -1,6 +1,7 @@
 package oanda_sdk
 
 import (
+	"encoding/json"
 	"github.com/shopspring/decimal"
 	"time"
 )
@@ -36,7 +37,7 @@ type Account struct {
 	GuaranteedStopLossOrderMode GuaranteedStopLossOrderMode `json:"guaranteedStopLossOrderMode"`
 
 	// The date/time that the Account’s resettablePL was last reset.
-	ResettablePLTime time.Time `json:"resettablePLTime"`
+	ResettablePLTime NullableTime `json:"resettablePLTime"`
 
 	// Client-provided margin rate override for the Account. The effective
 	// margin rate of the Account is the lesser of this value and the OANDA
@@ -140,6 +141,21 @@ type Account struct {
 
 	// The details of the Orders currently pending in the Account.
 	Orders []Order `json:"orders"`
+}
+
+type NullableTime struct {
+	*time.Time
+}
+
+func (nt *NullableTime) UnmarshalJSON(data []byte) error {
+	var t time.Time
+	err := json.Unmarshal(data, &t)
+	if err != nil {
+		nt.Time = nil
+		return nil
+	}
+	nt.Time = &t
+	return nil
 }
 
 // AccountChangesState struct is used to represent an Account’s current price-dependent state.

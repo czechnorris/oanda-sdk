@@ -1,0 +1,102 @@
+{
+  "account": {
+    "guaranteedStopLossOrderMode": "ALLOWED",
+    "hedgingEnabled": false,
+    "id": "xxx",
+    "createdTime": "2022-02-16T17:03:18.594636240Z",
+    "currency": "USD",
+    "createdByUserID": 21192530,
+    "alias": "USD account",
+    "marginRate": "0.1",
+    "lastTransactionID": "634",
+    "balance": "689.9148",
+    "openTradeCount": 0,
+    "openPositionCount": 0,
+    "pendingOrderCount": 0,
+    "pl": "3839.6280",
+    "resettablePL": "3839.6280",
+    "resettablePLTime": "0",
+    "financing": "-101.8132",
+    "commission": "0.0000",
+    "dividendAdjustment": "0",
+    "guaranteedExecutionFees": "0.0000",
+    "orders": [
+
+    ],
+    "positions": [
+      {
+        "instrument": "EUR_USD",
+        "long": {
+          "units": "0",
+          "pl": "-36.4336",
+          "resettablePL": "-36.4336",
+          "financing": "-0.6222",
+          "dividendAdjustment": "0.0000",
+          "guaranteedExecutionFees": "0.0000",
+          "unrealizedPL": "0.0000"
+        },
+        "short": {
+          "units": "0",
+          "pl": "-11.0741",
+          "resettablePL": "-11.0741",
+          "financing": "0.1371",
+          "dividendAdjustment": "0.0000",
+          "guaranteedExecutionFees": "0.0000",
+          "unrealizedPL": "0.0000"
+        },
+        "pl": "-47.5077",
+        "resettablePL": "-47.5077",
+        "financing": "-0.4851",
+        "commission": "0.0000",
+        "dividendAdjustment": "0.0000",
+        "guaranteedExecutionFees": "0.0000",
+        "unrealizedPL": "0.0000"
+      },
+      {
+        "instrument": "ETH_USD",
+        "long": {
+          "units": "0.00",
+          "pl": "-292.2235",
+          "resettablePL": "-292.2235",
+          "financing": "0.0000",
+          "dividendAdjustment": "0.0000",
+          "guaranteedExecutionFees": "0.0000",
+          "unrealizedPL": "0.0000"
+        },
+        "short": {
+          "units": "0.00",
+          "pl": "4179.3592",
+          "resettablePL": "4179.3592",
+          "financing": "-101.3281",
+          "dividendAdjustment": "0.0000",
+          "guaranteedExecutionFees": "0.0000",
+          "unrealizedPL": "0.0000"
+        },
+        "pl": "3887.1357",
+        "resettablePL": "3887.1357",
+        "financing": "-101.3281",
+        "commission": "0.0000",
+        "dividendAdjustment": "0.0000",
+        "guaranteedExecutionFees": "0.0000",
+        "unrealizedPL": "0.0000"
+      }
+    ],
+    "trades": [
+
+    ],
+    "unrealizedPL": "0.0000",
+    "NAV": "689.9148",
+    "marginUsed": "0.0000",
+    "marginAvailable": "689.9148",
+    "positionValue": "0.0000",
+    "marginCloseoutUnrealizedPL": "0.0000",
+    "marginCloseoutNAV": "689.9148",
+    "marginCloseoutMarginUsed": "0.0000",
+    "marginCloseoutPositionValue": "0.0000",
+    "marginCloseoutPercent": "0.00000",
+    "withdrawalLimit": "689.9148",
+    "marginCallMarginUsed": "0.0000",
+    "marginCallPercent": "0.00000"
+  },
+  "lastTransactionID": "634"
+}
