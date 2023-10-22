@@ -10,6 +10,13 @@ import (
 	"time"
 )
 
+const (
+	UrlRestPractice      = "https://api-fxpractice.oanda.com"
+	UrlRestLive          = "https://api-fxtrade.oanda.com"
+	UrlStreamingLive     = "https://stream-fxtrade.oanda.com"
+	UrlStreamingPractice = "https://stream-fxpractice.oanda.com"
+)
+
 type Client struct {
 	baseUrl     string
 	accessToken string
